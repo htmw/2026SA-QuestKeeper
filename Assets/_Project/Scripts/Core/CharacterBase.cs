@@ -13,8 +13,16 @@ public class CharacterBase : MonoBehaviour
     [Header("State Machine")]
     public CharacterState currentState = CharacterBase.CharacterState.Idle;
 
+    [Header("Jump Settings")]
+    public int maxJumps = 2;
+    private int jumpsRemaining;
+    public Transform groundCheck;
+    public float groundCheckRadius = 0.2f;
+    public LayerMask groundLayer;
+    public bool isGrounded;
+
     // The main states every fighter needs
-    public enum  CharacterState
+    public enum CharacterState
     {
         Idle,
         Moving,
@@ -38,7 +46,7 @@ public class CharacterBase : MonoBehaviour
 
     protected virtual void Update()
     {
-
+        CheckGrounded();
     }
 
     // -- CORE ACTIONS --
@@ -63,9 +71,11 @@ public class CharacterBase : MonoBehaviour
     public virtual void Jump()
     {
         // Only allow jumping if we aren't currently jumping/attacking/dead
-        if (currentState == CharacterState.Idle || currentState == CharacterState.Moving)
+        if (jumpsRemaining > 0 && currentState != CharacterState.Dead && currentState != CharacterState.Attacking)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+
+            jumpsRemaining--;
             ChangeState(CharacterState.Jumping);
         }
     }
@@ -121,11 +131,28 @@ public class CharacterBase : MonoBehaviour
         Debug.Log(gameObject.name + " has been KO'd!");
         // TODO: Disable hitboxes, trigger death animations
     }
-    
+
     public virtual void ChangeState(CharacterState newState)
     {
         currentState = newState;
         // TODO: Trigger animations based on state changes
         // anim.Play(newState.ToString());
+    }
+
+    protected virtual void CheckGrounded()
+    {
+
+        // Draw an invisible cirlce at the groundCheck position to see if it overlaps with any colliders on the ground layer
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+        if (isGrounded && rb.linearVelocity.y <= 0.1f)
+        {
+            jumpsRemaining = maxJumps;
+
+            if (currentState == CharacterState.Jumping)
+            {
+                // Reset state machine so we aren't infinitly jumping
+                ChangeState(CharacterState.Idle);
+            }
+        }
     }
 }
