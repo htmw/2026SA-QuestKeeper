@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
 
         // -- EVENT BINDINGS --
         controls.Player.Jump.performed += ctx => fighter.Jump();
+        controls.Player.Attack.performed += ctx => fighter.Attack();
     }
 
     void OnEnable()
