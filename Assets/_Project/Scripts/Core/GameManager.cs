@@ -1,3 +1,5 @@
+using System.Collections;
+using TMPro;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -29,6 +31,11 @@ public class GameManager : MonoBehaviour
     public Transform PlayerSpawnPoint;
     public Transform OpponentSpawnPoint;
 
+    [Header("Countdown Settings")]
+    public int countdownStart = 3;
+
+    [Header("UI")]
+    public TextMeshProUGUI countdownTxt;
 
     private void Awake()
     {
@@ -55,6 +62,41 @@ public class GameManager : MonoBehaviour
 
         // After spawning / loading, switch to Countdown state
         currState = MatchStates.Countdown;
+
+        StartCoroutine(StartCountdown());
+    }
+
+    public IEnumerator StartCountdown()
+    {
+        SetMatchState(MatchStates.Countdown);
+
+        // Count down from 3
+        for(int i = countdownStart; i > 0; i--)
+        {
+            if( countdownTxt  != null)
+            {
+                countdownTxt.text = i.ToString();
+            }
+
+            Debug.Log("Countdown: " + i);
+            yield return new WaitForSeconds(1f);
+        }
+
+        if (countdownTxt != null)
+        {
+            countdownTxt.text = "FIGHT!";
+        }
+
+        Debug.Log("Countdown: Fight!");
+        yield return new WaitForSeconds(1f);
+
+        // Clears text and starts match
+        if (countdownTxt != null)
+        {
+            countdownTxt.text = "";
+        }
+
+        SetMatchState(MatchStates.Playing);
     }
 
 
