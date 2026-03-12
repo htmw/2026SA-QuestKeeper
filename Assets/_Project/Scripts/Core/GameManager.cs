@@ -5,6 +5,20 @@ public class GameManager : MonoBehaviour
     // Singleton used to allow other scripts to easily access GameManager
     public static GameManager Instance { get; private set; }
 
+    // All possible match states
+    public enum MatchStates
+    {
+        Loading,
+        Countdown,
+        Playing,
+        Paused,
+        RoundOver
+    }
+
+    [Header("Match State")]
+    // Stores the games current state (Starts with Loading as default)
+    public MatchStates currState = MatchStates.Loading;
+
     [Header("Fighter References")]
     // Attach Player and Opponenet objects
     public GameObject player;
@@ -33,7 +47,14 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
     {
+        // Scene is starting, set Match State to Loading
+        currState = MatchStates.Loading;
+
+        // Place both fighters at their assigned positions
         PlaceFighters();
+
+        // After spawning / loading, switch to Countdown state
+        currState = MatchStates.Countdown;
     }
 
 
@@ -50,5 +71,11 @@ public class GameManager : MonoBehaviour
         {
             opponent.transform.position = OpponentSpawnPoint.position;
         }
+    }
+
+    // Helper function used to switch the match state
+    public void SetMatchState(MatchStates newState)
+    {
+        currState = newState;
     }
 }

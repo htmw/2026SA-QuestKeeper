@@ -100,7 +100,7 @@ public class Main_Battle_Camera : MonoBehaviour
         }
 
         MoveCamera();
-        ZoomCamera();
+        ZoomCamera(); 
     }
 
     private void MoveCamera()
@@ -111,8 +111,13 @@ public class Main_Battle_Camera : MonoBehaviour
         // Keep the camera inside the stage boundaries.
         float clampedX = Mathf.Clamp(midpointX, minX, maxX);
 
+        // Slightly lowers the camera when zoomed in
+        float zoomOffsetY = Mathf.Lerp(-0.5f, 0f, Mathf.InverseLerp(minZoom, maxZoom, cam.orthographicSize));
+        float targetY = fixedY + zoomOffsetY;
+
+
         // Builds final target position.
-        Vector3 targetPosition = new Vector3(clampedX, fixedY, -10f);
+        Vector3 targetPosition = new Vector3(clampedX, targetY, -10f);
 
         // Smoothly move toward that position.
         transform.position = Vector3.SmoothDamp(
