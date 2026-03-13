@@ -50,6 +50,10 @@ public class GameManager : MonoBehaviour
     private float currTime;
     public TextMeshProUGUI timerText;
 
+    [Header("Health")]
+    public HealthSystem playerHealth;
+    public HealthSystem opponentHealth;
+
     [Header("Spawn Locations")]
     // Places players and opponents at their assigned spawn locations at the start of each match
     public Transform PlayerSpawnPoint;
@@ -61,6 +65,7 @@ public class GameManager : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI countdownTxt;
 
+   
     private void Awake()
     {
         // Makes sure only 1 Game Manager exists
@@ -84,6 +89,22 @@ public class GameManager : MonoBehaviour
         // Place both fighters at their assigned positions
         PlaceFighters();
         SpawnOpponent();
+        
+        if(spawnedOpponent != null)
+        {
+            opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
+        }
+
+        // Reset Health
+        if (playerHealth != null)
+        {
+            playerHealth.ResetHealth();
+        }
+
+        if (opponentHealth != null)
+        {
+            opponentHealth.ResetHealth();
+        }
 
         currTime = roundTime;
 
@@ -110,8 +131,31 @@ public class GameManager : MonoBehaviour
         {
             Timer();
         }
+
+        CheckHealth();
     }
 
+    void CheckHealth()
+    {
+        if (currState != MatchStates.Playing)
+        {
+            return;
+        }
+
+        // Lets Game Manager know when to end the round
+        if (playerHealth != null && playerHealth.currHealth <= 0)
+        {
+            Debug.Log("Player Died");
+            SetMatchState(MatchStates.RoundOver);
+        }
+
+        if(opponentHealth != null && opponentHealth.currHealth <= 0)
+        {
+            Debug.Log("Opponent Died");
+            SetMatchState(MatchStates.RoundOver);
+        }
+
+    }
     // Basic Timer Function
     void Timer()
     {
@@ -246,7 +290,14 @@ public class GameManager : MonoBehaviour
         if (spawnPrefab != null && OpponentSpawnPoint != null)
 
         {
+            // Spawns AI Difficulty Opponent
             spawnedOpponent = Instantiate(spawnPrefab, OpponentSpawnPoint.position, Quaternion.identity);
+
+            opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
+            if(playerCtrl != null)
+            {
+                playerCtrl.opponentHealth = opponentHealth;
+            }
             Debug.Log("Spawned AI Difficulty: " + selectedDifficulty);
         }
         {

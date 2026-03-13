@@ -10,6 +10,7 @@ public class TestPlayerCtrl : MonoBehaviour
     public float moveSpeed = 5f;
     public float jumpForce = 8f;
 
+
     [Header("Ground Check")]
     public bool isGrounded = true;
 
@@ -17,18 +18,19 @@ public class TestPlayerCtrl : MonoBehaviour
     private bool moveLocked = true; // Player movement locked
     private float moveInput = 0f;
 
+
+    [Header("Combat System")]
+    public int punchDamage = 10;
+    public float punchRange = 2f;
+    public HealthSystem opponentHealth;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
     }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         // Stops all inputs while movement is locked
         if (moveLocked)
@@ -36,7 +38,7 @@ public class TestPlayerCtrl : MonoBehaviour
             moveInput = 0f;
             return;
         }
-       // CombatSystem();
+        CombatSystem();
         PlayerControls();
     }
 
@@ -64,16 +66,6 @@ public class TestPlayerCtrl : MonoBehaviour
             moveInput = 1f;
         }
 
-        if (Keyboard.current.aKey.wasPressedThisFrame || Keyboard.current.leftArrowKey.wasPressedThisFrame)
-        {
-            Debug.Log("Moving Left");
-        }
-
-        if (Keyboard.current.dKey.wasPressedThisFrame || Keyboard.current.rightArrowKey.wasPressedThisFrame)
-        {
-            Debug.Log("Moving Right");
-        }
-
         // Jump Controls
         if(Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
         {
@@ -83,14 +75,32 @@ public class TestPlayerCtrl : MonoBehaviour
         }
     }
 
-    /*
-    private void CombatSystem()
+      private void CombatSystem()
     {
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             Debug.Log("Punch Thrown");
+
+            if (opponentHealth == null)
+            {
+               
+                Debug.Log("No opponent health assigned");
+                return;
+            }
+            float distanceToOpp = Vector2.Distance(transform.position, opponentHealth.transform.position);
+
+            if (distanceToOpp <= punchRange)
+            {
+                opponentHealth.TakeDamage(punchDamage);
+                Debug.Log("Punch Connected");
+            }
+
+            else
+            {
+                Debug.Log("Punch missed");
+            }
         }
-    }*/
+    }
 
     // Disables Player Movement (Player & Opponent)
     public void LockMovement()
