@@ -222,8 +222,12 @@ public class CharacterBase : MonoBehaviour
     public virtual void ChangeState(CharacterState newState)
     {
         currentState = newState;
-        // TODO: Trigger animations based on state changes
-        // anim.Play(newState.ToString());
+        
+
+        if (anim != null)
+        {
+            anim.Play(newState.ToString());
+        }
     }
 
     protected virtual void OnCollisionEnter2D(Collision2D collision)
