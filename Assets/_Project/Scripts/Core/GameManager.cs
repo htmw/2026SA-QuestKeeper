@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class GameManager : MonoBehaviour
 {
@@ -27,7 +28,12 @@ public class GameManager : MonoBehaviour
     public GameObject opponent;
 
     [Header("Player Controller References")]
-    public TestPlayerCtrl playerCtrl;   
+    public TestPlayerCtrl playerCtrl;
+
+    [Header("Round Timer")]
+    public float roundTime = 30f;
+    private float currTime;
+    public TextMeshProUGUI timerText;
 
     [Header("Spawn Locations")]
     // Places players and opponents at their assigned spawn locations at the start of each match
@@ -63,12 +69,81 @@ public class GameManager : MonoBehaviour
         // Place both fighters at their assigned positions
         PlaceFighters();
 
+        currTime = roundTime;
+
         if(playerCtrl != null)
         {
             playerCtrl.LockMovement();
         }
 
         StartCoroutine(StartCountdown());
+
+        currTime = roundTime;
+
+        if (timerText != null)
+        {
+            timerText.text = Mathf.CeilToInt(currTime).ToString();
+        }      
+    }
+
+    private void Update()
+    {
+        Pause();
+
+        if(currState == MatchStates.Playing)
+        {
+            Timer();
+        }
+    }
+
+    // Basic Timer Function
+    void Timer()
+    {
+        currTime -= Time.deltaTime;
+
+        if (currTime <= 0)
+        {
+            currTime = 0;
+            Debug.Log("Round Over!");
+        }
+
+        if(timerText != null)
+        {
+            timerText.text = Mathf.CeilToInt(currTime).ToString();
+        }
+
+
+        Debug.Log("Timer: " + Mathf.CeilToInt(currTime));
+    }
+
+    void Pause()
+    {
+        if(Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            if(currState == MatchStates.Playing)
+            {
+                SetMatchState (MatchStates.Paused);
+
+                if(playerCtrl != null)
+                {
+                    playerCtrl.LockMovement ();
+                }
+
+                Debug.Log("Game Paused");
+            }
+
+            else if (currState == MatchStates.Paused)
+            {
+                SetMatchState(MatchStates.Playing);
+
+                if(playerCtrl != null)
+                {
+                    playerCtrl.UnlockMovement ();
+                }
+
+                Debug.Log("Game Resumed");
+            }
+        }
     }
 
     public IEnumerator StartCountdown()
