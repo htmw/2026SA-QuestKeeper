@@ -74,7 +74,7 @@ public class CharacterBase : MonoBehaviour
 
     public virtual void Move(float direction)
     {
-        if (currentState == CharacterState.Dead || currentState == CharacterState.Hit) return;
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Hit || currentState == CharacterState.Blocking || currentState == CharacterState.Attacking) return;
 
         if (direction != 0)
         {
@@ -172,6 +172,12 @@ public class CharacterBase : MonoBehaviour
         // Basic attack like a punch. May be added to or replaced later based on abilities
         if (currentState != CharacterState.Attacking && currentState != CharacterState.Dead)
         {
+            if (isGrounded)
+            {
+                // If we're on the ground, we want to stop horizontal movement when attacking
+                rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            }
+
             ChangeState(CharacterState.Attacking);
             attackTimer = attackDuration;
 
@@ -187,6 +193,9 @@ public class CharacterBase : MonoBehaviour
 
         if (isBlocking)
         {
+            // Prevent Sliding
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+
             ChangeState(CharacterState.Blocking);
         }
         else if (currentState == CharacterState.Blocking)

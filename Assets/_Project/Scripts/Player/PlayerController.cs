@@ -16,6 +16,9 @@ public class PlayerController : MonoBehaviour
         // -- EVENT BINDINGS --
         controls.Player.Jump.performed += ctx => fighter.Jump();
         controls.Player.Attack.performed += ctx => fighter.Attack();
+
+        controls.Player.Block.started += ctx => fighter.Block(true);
+        controls.Player.Block.canceled += ctx => fighter.Block(false);
     }
 
     void OnEnable()
