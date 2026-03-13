@@ -2,6 +2,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -49,10 +50,6 @@ public class GameManager : MonoBehaviour
     private float currTime;
     public TextMeshProUGUI timerText;
 
-    [Header("Health")]
-    public HealthSystem playerHealth;
-    public HealthSystem opponentHealth;
-
     [Header("Spawn Locations")]
     // Places players and opponents at their assigned spawn locations at the start of each match
     public Transform PlayerSpawnPoint;
@@ -62,9 +59,12 @@ public class GameManager : MonoBehaviour
     public int countdownStart = 3;
 
     [Header("UI")]
-    public TextMeshProUGUI countdownTxt;
+    public UnityEngine.UI.Image countdownImage;
+    public Sprite[] countdownSprites;
+    public UnityEngine.UI.Image playerHealthBar;
+    public UnityEngine.UI.Image opponentHealthBar;
 
-   
+
     private void Awake()
     {
         // Makes sure only 1 Game Manager exists
@@ -89,21 +89,21 @@ public class GameManager : MonoBehaviour
         PlaceFighters();
         SpawnOpponent();
         
-        if(spawnedOpponent != null)
-        {
-            opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
-        }
+        //if(spawnedOpponent != null)
+        //{
+            //opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
+        //}
 
         // Reset Health
-        if (playerHealth != null)
-        {
-            playerHealth.ResetHealth();
-        }
+        //if (playerHealth != null)
+        //{
+            //playerHealth.ResetHealth();
+        //}
 
-        if (opponentHealth != null)
-        {
-            opponentHealth.ResetHealth();
-        }
+        //if (opponentHealth != null)
+        //{
+            //opponentHealth.ResetHealth();
+        //}
 
         currTime = roundTime;
 
@@ -130,31 +130,55 @@ public class GameManager : MonoBehaviour
         {
             Timer();
         }
-
-        CheckHealth();
+        
+        UpdateHealthUI();
+        //CheckHealth();
     }
 
-    void CheckHealth()
-    {
-        if (currState != MatchStates.Playing)
-        {
-            return;
-        }
+    //void CheckHealth()
+    //{
+        //if (currState != MatchStates.Playing)
+        //{
+            //return;
+        //}
 
         // Lets Game Manager know when to end the round
-        if (playerHealth != null && playerHealth.currHealth <= 0)
+        //if (playerHealth != null && playerHealth.currHealth <= 0)
+        //{
+            //Debug.Log("Player Died");
+            //SetMatchState(MatchStates.RoundOver);
+        //}
+
+        //if(opponentHealth != null && opponentHealth.currHealth <= 0)
+        //{
+            //Debug.Log("Opponent Died");
+            //SetMatchState(MatchStates.RoundOver);
+        //}
+
+    //}
+
+    // Updated Health function that uses the stats from the CharacterBase and updates the UI
+    void UpdateHealthUI()
+    {
+        if (player != null && playerHealthBar != null)
         {
-            Debug.Log("Player Died");
-            SetMatchState(MatchStates.RoundOver);
+            CharacterBase playerBase = player.GetComponent<CharacterBase>();
+            if (playerBase != null)
+            {
+                playerHealthBar.fillAmount = (float)playerBase.currentHealth / playerBase.maxHealth;
+            }
         }
 
-        if(opponentHealth != null && opponentHealth.currHealth <= 0)
+        if (spawnedOpponent != null && opponentHealthBar != null)
         {
-            Debug.Log("Opponent Died");
-            SetMatchState(MatchStates.RoundOver);
+            CharacterBase opponentBase = spawnedOpponent.GetComponent<CharacterBase>();
+            if (opponentBase != null)
+            {
+                opponentHealthBar.fillAmount = (float)opponentBase.currentHealth / opponentBase.maxHealth;
+            }
         }
-
     }
+
     // Basic Timer Function
     void Timer()
     {
@@ -205,31 +229,33 @@ public class GameManager : MonoBehaviour
     public IEnumerator StartCountdown()
     {
         SetMatchState(MatchStates.Countdown);
+        if (countdownImage != null) countdownImage.enabled = true;
 
         // Count down from 3
-        for(int i = countdownStart; i > 0; i--)
+        for (int i = countdownStart; i > 0; i--)
         {
-            if( countdownTxt  != null)
+            if( countdownImage  != null && countdownSprites.Length > 0)
             {
-                countdownTxt.text = i.ToString();
+                int spriteIndex = countdownStart - i;
+                countdownImage.sprite = countdownSprites[spriteIndex];
             }
 
             Debug.Log("Countdown: " + i);
             yield return new WaitForSeconds(1f);
         }
 
-        if (countdownTxt != null)
+        if (countdownImage != null && countdownSprites.Length > 3)
         {
-            countdownTxt.text = "FIGHT!";
+            countdownImage.sprite = countdownSprites[3];
         }
 
         Debug.Log("Countdown: Fight!");
         yield return new WaitForSeconds(1f);
 
         // Clears text and starts match
-        if (countdownTxt != null)
+        if (countdownImage != null)
         {
-            countdownTxt.text = "";
+            countdownImage.enabled = false;
         }
 
         SetMatchState(MatchStates.Playing);
