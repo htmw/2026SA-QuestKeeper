@@ -18,6 +18,12 @@ public class GameManager : MonoBehaviour
         RoundOver
     }
 
+    public enum AIDifficulty
+    {
+        Easy,
+        Medium,
+        Hard
+    }
     [Header("Match State")]
     // Stores the games current state (Starts with Loading as default)
     public MatchStates currState = MatchStates.Loading;
@@ -27,9 +33,18 @@ public class GameManager : MonoBehaviour
     public GameObject player;
     public GameObject opponent;
 
+    [Header("Opponent Prefabs")]
+    public GameObject easyOpp;
+    public GameObject midOpp;
+    public GameObject hardOpp;
+
+    private GameObject spawnedOpponent;
+
     [Header("Player Controller References")]
     public TestPlayerCtrl playerCtrl;
 
+    [Header("AI Difficulty")]
+    public AIDifficulty selectedDifficulty = AIDifficulty.Easy;
     [Header("Round Timer")]
     public float roundTime = 30f;
     private float currTime;
@@ -68,6 +83,7 @@ public class GameManager : MonoBehaviour
 
         // Place both fighters at their assigned positions
         PlaceFighters();
+        SpawnOpponent();
 
         currTime = roundTime;
 
@@ -206,5 +222,35 @@ public class GameManager : MonoBehaviour
     {
         currState = newState;
         Debug.Log("Match State changed to: " + currState);
+    }
+
+    void SpawnOpponent()
+    {
+        GameObject spawnPrefab = null;
+
+        switch (selectedDifficulty)
+        {
+            case AIDifficulty.Easy:
+                spawnPrefab = easyOpp;
+                break;
+
+            case AIDifficulty.Medium:
+                spawnPrefab = midOpp;
+                break;
+
+            case AIDifficulty.Hard:
+                spawnPrefab = hardOpp;
+                break;
+        }
+
+        if (spawnPrefab != null && OpponentSpawnPoint != null)
+
+        {
+            spawnedOpponent = Instantiate(spawnPrefab, OpponentSpawnPoint.position, Quaternion.identity);
+            Debug.Log("Spawned AI Difficulty: " + selectedDifficulty);
+        }
+        {
+            
+        }
     }
 }
