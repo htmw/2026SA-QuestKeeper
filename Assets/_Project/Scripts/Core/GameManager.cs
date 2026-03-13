@@ -31,7 +31,6 @@ public class GameManager : MonoBehaviour
     [Header("Fighter References")]
     // Attach Player and Opponenet objects
     public GameObject player;
-    public GameObject opponent;
 
     [Header("Opponent Prefabs")]
     public GameObject easyOpp;
@@ -251,11 +250,6 @@ public class GameManager : MonoBehaviour
         {
             player.transform.position = PlayerSpawnPoint.position;
         }
-
-        if (opponent != null && OpponentSpawnPoint != null)
-        {
-            opponent.transform.position = OpponentSpawnPoint.position;
-        }
     }
 
     // Helper function used to switch the match state
@@ -271,17 +265,9 @@ public class GameManager : MonoBehaviour
 
         switch (selectedDifficulty)
         {
-            case AIDifficulty.Easy:
-                spawnPrefab = easyOpp;
-                break;
-
-            case AIDifficulty.Medium:
-                spawnPrefab = midOpp;
-                break;
-
-            case AIDifficulty.Hard:
-                spawnPrefab = hardOpp;
-                break;
+            case AIDifficulty.Easy: spawnPrefab = easyOpp; break;
+            case AIDifficulty.Medium: spawnPrefab = midOpp; break;
+            case AIDifficulty.Hard: spawnPrefab = hardOpp; break;
         }
 
         if (spawnPrefab != null && OpponentSpawnPoint != null)
@@ -290,16 +276,27 @@ public class GameManager : MonoBehaviour
             // Spawns AI Difficulty Opponent
             spawnedOpponent = Instantiate(spawnPrefab, OpponentSpawnPoint.position, Quaternion.identity);
 
-            // Make sure opponent has correct character reference
-            CharacterBase playerBase = player.GetComponent<CharacterBase>();
-            CharacterBase aiBase = spawnedOpponent.GetComponent<CharacterBase>();
-
-            if (playerBase != null && aiBase != null)
+            // Fixes AutoFacing reference issues on spawned opponent
+            if (player != null)
             {
-                playerBase.opponent = spawnedOpponent.transform;
-                aiBase.opponent = player.transform;
+                // Make sure opponent has correct character reference
+                CharacterBase playerBase = player.GetComponent<CharacterBase>();
+                CharacterBase aiBase = spawnedOpponent.GetComponent<CharacterBase>();
+
+                if (playerBase != null && aiBase != null)
+                {
+                    playerBase.opponent = spawnedOpponent.transform;
+                    aiBase.opponent = player.transform;
+                }
+                Debug.Log("Spawned AI Difficulty: " + selectedDifficulty);
             }
-            Debug.Log("Spawned AI Difficulty: " + selectedDifficulty);
+
+            // Camera can reference the spawned opponents position
+            Main_Battle_Camera camScript = Camera.main.GetComponent<Main_Battle_Camera>();
+            if (camScript != null)
+            {
+                camScript.opponent = spawnedOpponent.transform;
+            }
         }
     }
 }
