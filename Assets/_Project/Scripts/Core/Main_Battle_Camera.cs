@@ -111,10 +111,13 @@ public class Main_Battle_Camera : MonoBehaviour
         // Keep the camera inside the stage boundaries.
         float clampedX = Mathf.Clamp(midpointX, minX, maxX);
 
+        // ADDED: Adjust the Y position based on zoom level to keep the fighters in view and add some dynamic movement
+        float midpointY = (player.position.y + opponent.position.y) * 0.5f;
+        float targetY = Mathf.Max(fixedY, midpointY + 0.5f);
+
         // Slightly lowers the camera when zoomed in
         float zoomOffsetY = Mathf.Lerp(-0.5f, 0f, Mathf.InverseLerp(minZoom, maxZoom, cam.orthographicSize));
-        float targetY = fixedY + zoomOffsetY;
-
+        targetY += zoomOffsetY;
 
         // Builds final target position.
         Vector3 targetPosition = new Vector3(clampedX, targetY, -10f);
@@ -130,11 +133,17 @@ public class Main_Battle_Camera : MonoBehaviour
 
     private void ZoomCamera()
     {
-        // Measure left/right separation only.
+        // Measure left/right separation
         float horizontalDistance = Mathf.Abs(player.position.x - opponent.position.x);
 
+        // Measure up/down sepration
+        float verticalDistance = Mathf.Abs(player.position.y - opponent.position.y);
+
+        // Multiply vertical distance by 1.5 to account for the shorter verticle field of view
+        float largestDistance = Mathf.Max(horizontalDistance, verticalDistance * 2f);
+
         // Apply dead zone so tiny changes do not constantly adjust zoom.
-        float adjustedDistance = Mathf.Max(0f, horizontalDistance - zoomDeadZone);
+        float adjustedDistance = Mathf.Max(0f, largestDistance - zoomDeadZone);
 
         // Convert  distance into a 0 to 1 interpolation value
         float t = Mathf.Clamp01(adjustedDistance / zoomLimiter);

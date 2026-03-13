@@ -2,6 +2,8 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -31,7 +33,6 @@ public class GameManager : MonoBehaviour
     [Header("Fighter References")]
     // Attach Player and Opponenet objects
     public GameObject player;
-    public GameObject opponent;
 
     [Header("Opponent Prefabs")]
     public GameObject easyOpp;
@@ -41,7 +42,7 @@ public class GameManager : MonoBehaviour
     private GameObject spawnedOpponent;
 
     [Header("Player Controller References")]
-    public TestPlayerCtrl playerCtrl;
+    public PlayerController playerCtrl;
 
     [Header("AI Difficulty")]
     public AIDifficulty selectedDifficulty = AIDifficulty.Easy;
@@ -49,10 +50,6 @@ public class GameManager : MonoBehaviour
     public float roundTime = 30f;
     private float currTime;
     public TextMeshProUGUI timerText;
-
-    [Header("Health")]
-    public HealthSystem playerHealth;
-    public HealthSystem opponentHealth;
 
     [Header("Spawn Locations")]
     // Places players and opponents at their assigned spawn locations at the start of each match
@@ -63,9 +60,15 @@ public class GameManager : MonoBehaviour
     public int countdownStart = 3;
 
     [Header("UI")]
-    public TextMeshProUGUI countdownTxt;
+    public UnityEngine.UI.Image countdownImage;
+    public Sprite[] countdownSprites;
+    public UnityEngine.UI.Image playerHealthBar;
+    public UnityEngine.UI.Image opponentHealthBar;
+    public GameObject pauseGamePanel;
+    public GameObject endGamePanel;
+    public TextMeshProUGUI endGameTxt;
 
-   
+
     private void Awake()
     {
         // Makes sure only 1 Game Manager exists
@@ -77,7 +80,7 @@ public class GameManager : MonoBehaviour
         }
         // If no Game Manager exists then this one becomes the singleton instances
         Instance = this;
-        
+
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -89,26 +92,26 @@ public class GameManager : MonoBehaviour
         // Place both fighters at their assigned positions
         PlaceFighters();
         SpawnOpponent();
-        
-        if(spawnedOpponent != null)
-        {
-            opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
-        }
+
+        //if(spawnedOpponent != null)
+        //{
+        //opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
+        //}
 
         // Reset Health
-        if (playerHealth != null)
-        {
-            playerHealth.ResetHealth();
-        }
+        //if (playerHealth != null)
+        //{
+        //playerHealth.ResetHealth();
+        //}
 
-        if (opponentHealth != null)
-        {
-            opponentHealth.ResetHealth();
-        }
+        //if (opponentHealth != null)
+        //{
+        //opponentHealth.ResetHealth();
+        //}
 
         currTime = roundTime;
 
-        if(playerCtrl != null)
+        if (playerCtrl != null)
         {
             playerCtrl.LockMovement();
         }
@@ -120,42 +123,67 @@ public class GameManager : MonoBehaviour
         if (timerText != null)
         {
             timerText.text = Mathf.CeilToInt(currTime).ToString();
-        }      
+        }
     }
 
     private void Update()
     {
         Pause();
 
-        if(currState == MatchStates.Playing)
+        if (currState == MatchStates.Playing)
         {
             Timer();
         }
 
-        CheckHealth();
+        UpdateHealthUI();
+        CheckEndGame();
+        //CheckHealth();
     }
 
-    void CheckHealth()
+    //void CheckHealth()
+    //{
+    //if (currState != MatchStates.Playing)
+    //{
+    //return;
+    //}
+
+    // Lets Game Manager know when to end the round
+    //if (playerHealth != null && playerHealth.currHealth <= 0)
+    //{
+    //Debug.Log("Player Died");
+    //SetMatchState(MatchStates.RoundOver);
+    //}
+
+    //if(opponentHealth != null && opponentHealth.currHealth <= 0)
+    //{
+    //Debug.Log("Opponent Died");
+    //SetMatchState(MatchStates.RoundOver);
+    //}
+
+    //}
+
+    // Updated Health function that uses the stats from the CharacterBase and updates the UI
+    void UpdateHealthUI()
     {
-        if (currState != MatchStates.Playing)
+        if (player != null && playerHealthBar != null)
         {
-            return;
+            CharacterBase playerBase = player.GetComponent<CharacterBase>();
+            if (playerBase != null)
+            {
+                playerHealthBar.fillAmount = (float)playerBase.currentHealth / playerBase.maxHealth;
+            }
         }
 
-        // Lets Game Manager know when to end the round
-        if (playerHealth != null && playerHealth.currHealth <= 0)
+        if (spawnedOpponent != null && opponentHealthBar != null)
         {
-            Debug.Log("Player Died");
-            SetMatchState(MatchStates.RoundOver);
+            CharacterBase opponentBase = spawnedOpponent.GetComponent<CharacterBase>();
+            if (opponentBase != null)
+            {
+                opponentHealthBar.fillAmount = (float)opponentBase.currentHealth / opponentBase.maxHealth;
+            }
         }
-
-        if(opponentHealth != null && opponentHealth.currHealth <= 0)
-        {
-            Debug.Log("Opponent Died");
-            SetMatchState(MatchStates.RoundOver);
-        }
-
     }
+
     // Basic Timer Function
     void Timer()
     {
@@ -167,26 +195,24 @@ public class GameManager : MonoBehaviour
             Debug.Log("Round Over!");
         }
 
-        if(timerText != null)
+        if (timerText != null)
         {
             timerText.text = Mathf.CeilToInt(currTime).ToString();
         }
-
-
-        Debug.Log("Timer: " + Mathf.CeilToInt(currTime));
     }
 
     void Pause()
     {
-        if(Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            if(currState == MatchStates.Playing)
+            if (currState == MatchStates.Playing)
             {
-                SetMatchState (MatchStates.Paused);
+                SetMatchState(MatchStates.Paused);
 
-                if(playerCtrl != null)
+                if (playerCtrl != null)
                 {
-                    playerCtrl.LockMovement ();
+                    playerCtrl.LockMovement();
+                    pauseGamePanel.SetActive(true);
                 }
 
                 Debug.Log("Game Paused");
@@ -196,9 +222,10 @@ public class GameManager : MonoBehaviour
             {
                 SetMatchState(MatchStates.Playing);
 
-                if(playerCtrl != null)
+                if (playerCtrl != null)
                 {
-                    playerCtrl.UnlockMovement ();
+                    playerCtrl.UnlockMovement();
+                    pauseGamePanel.SetActive(false);
                 }
 
                 Debug.Log("Game Resumed");
@@ -209,37 +236,39 @@ public class GameManager : MonoBehaviour
     public IEnumerator StartCountdown()
     {
         SetMatchState(MatchStates.Countdown);
+        if (countdownImage != null) countdownImage.enabled = true;
 
         // Count down from 3
-        for(int i = countdownStart; i > 0; i--)
+        for (int i = countdownStart; i > 0; i--)
         {
-            if( countdownTxt  != null)
+            if (countdownImage != null && countdownSprites.Length > 0)
             {
-                countdownTxt.text = i.ToString();
+                int spriteIndex = countdownStart - i;
+                countdownImage.sprite = countdownSprites[spriteIndex];
             }
 
             Debug.Log("Countdown: " + i);
             yield return new WaitForSeconds(1f);
         }
 
-        if (countdownTxt != null)
+        if (countdownImage != null && countdownSprites.Length > 3)
         {
-            countdownTxt.text = "FIGHT!";
+            countdownImage.sprite = countdownSprites[3];
         }
 
         Debug.Log("Countdown: Fight!");
         yield return new WaitForSeconds(1f);
 
         // Clears text and starts match
-        if (countdownTxt != null)
+        if (countdownImage != null)
         {
-            countdownTxt.text = "";
+            countdownImage.enabled = false;
         }
 
         SetMatchState(MatchStates.Playing);
 
         // Unlock movement once countdown ends
-        if(playerCtrl != null)
+        if (playerCtrl != null)
         {
             playerCtrl.UnlockMovement();
         }
@@ -253,11 +282,6 @@ public class GameManager : MonoBehaviour
         if (player != null && PlayerSpawnPoint != null)
         {
             player.transform.position = PlayerSpawnPoint.position;
-        }
-
-        if (opponent != null && OpponentSpawnPoint != null)
-        {
-            opponent.transform.position = OpponentSpawnPoint.position;
         }
     }
 
@@ -274,17 +298,9 @@ public class GameManager : MonoBehaviour
 
         switch (selectedDifficulty)
         {
-            case AIDifficulty.Easy:
-                spawnPrefab = easyOpp;
-                break;
-
-            case AIDifficulty.Medium:
-                spawnPrefab = midOpp;
-                break;
-
-            case AIDifficulty.Hard:
-                spawnPrefab = hardOpp;
-                break;
+            case AIDifficulty.Easy: spawnPrefab = easyOpp; break;
+            case AIDifficulty.Medium: spawnPrefab = midOpp; break;
+            case AIDifficulty.Hard: spawnPrefab = hardOpp; break;
         }
 
         if (spawnPrefab != null && OpponentSpawnPoint != null)
@@ -293,15 +309,97 @@ public class GameManager : MonoBehaviour
             // Spawns AI Difficulty Opponent
             spawnedOpponent = Instantiate(spawnPrefab, OpponentSpawnPoint.position, Quaternion.identity);
 
-            opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
-            if(playerCtrl != null)
+            // Fixes AutoFacing reference issues on spawned opponent
+            if (player != null)
             {
-                playerCtrl.opponentHealth = opponentHealth;
+                // Make sure opponent has correct character reference
+                CharacterBase playerBase = player.GetComponent<CharacterBase>();
+                CharacterBase aiBase = spawnedOpponent.GetComponent<CharacterBase>();
+
+                if (playerBase != null && aiBase != null)
+                {
+                    playerBase.opponent = spawnedOpponent.transform;
+                    aiBase.opponent = player.transform;
+                }
+                Debug.Log("Spawned AI Difficulty: " + selectedDifficulty);
             }
-            Debug.Log("Spawned AI Difficulty: " + selectedDifficulty);
+
+            // Camera can reference the spawned opponents position
+            Main_Battle_Camera camScript = Camera.main.GetComponent<Main_Battle_Camera>();
+            if (camScript != null)
+            {
+                camScript.opponent = spawnedOpponent.transform;
+            }
         }
+    }
+
+
+    // END GAME LOGIC
+
+
+    public void RetryMatch()
+    {
+        // Reloads the exact scene we are currently in
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void QuitToMenu()
+    {
+        SceneManager.LoadScene("Scn_MainMenu");
+    }
+
+    void CheckEndGame()
+    {
+        if (currState != MatchStates.Playing)
         {
-            
+            return;
+        }
+
+        CharacterBase playerBase = player != null ? player.GetComponent<CharacterBase>() : null;
+        CharacterBase opponentBase = spawnedOpponent != null ? spawnedOpponent.GetComponent<CharacterBase>() : null;
+
+        // Player Loses
+        if (playerBase != null && playerBase.currentHealth <= 0)
+        {
+            SetMatchState(MatchStates.RoundOver);
+
+            if (playerCtrl != null)
+            {
+                playerCtrl.LockMovement();
+            }
+
+            if (endGameTxt != null)
+            {
+                endGameTxt.text = "DEFEAT";
+            }
+
+            if (endGamePanel != null)
+            {
+                endGamePanel.SetActive(true);
+            }
+            return;
+        }
+
+        // Opponent Loses
+        if (opponentBase != null && opponentBase.currentHealth <= 0)
+        {
+            SetMatchState(MatchStates.RoundOver);
+
+            if (playerCtrl != null)
+            {
+                playerCtrl.LockMovement();
+            }
+
+            if (endGameTxt != null)
+            {
+                endGameTxt.text = "VICTORY!";
+            }
+
+            if (endGamePanel != null)
+            {
+                endGamePanel.SetActive(true);
+            }
+            return;
         }
     }
 }
