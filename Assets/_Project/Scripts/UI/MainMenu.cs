@@ -3,11 +3,18 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-   
-        public void PlayGame()
-        {
-            SceneManager.LoadSceneAsync(1);
-        }
-    
+    public string levelToLoad = "InGameScene";
+
+    public void PlayGame()
+    {
+        Debug.Log("Loading level...");
+        SceneManager.LoadScene(levelToLoad);
+    }
+
+    public void QuitGame()
+    {
+        Debug.Log("Game is exiting!");
+        Application.Quit();
+    }
+
 }
