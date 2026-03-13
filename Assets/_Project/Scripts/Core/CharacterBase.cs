@@ -26,6 +26,10 @@ public class CharacterBase : MonoBehaviour
     public float attackDuration = 0.2f;
     private float attackTimer;
 
+    [Header("Movement")]
+    public float pushSpeedMultiplier = 0.5f;
+    private bool isTouchingFighter = false;
+
     // The main states every fighter needs
     public enum CharacterState
     {
@@ -66,16 +70,27 @@ public class CharacterBase : MonoBehaviour
     {
         if (currentState == CharacterState.Dead || currentState == CharacterState.Hit) return;
 
-        // Apply velocity either left or right
-        rb.linearVelocity = new Vector2(direction * moveSpeed, rb.linearVelocity.y);
+        if (direction != 0)
+        {
+            float actualSpeed = isTouchingFighter ? moveSpeed * pushSpeedMultiplier : moveSpeed;
 
-        if (direction != 0 && currentState == CharacterState.Idle)
-        {
-            ChangeState(CharacterState.Moving);
+            // Apply velocity using calculated speed
+            rb.linearVelocity = new Vector2(direction * actualSpeed, rb.linearVelocity.y);
+
+            if (currentState == CharacterState.Idle)
+            {
+                ChangeState(CharacterState.Moving);
+            }
         }
-        else if (direction == 0 && currentState == CharacterState.Moving)
+
+        else
         {
-            ChangeState(CharacterState.Idle);
+            rb.linearVelocity = new Vector2(Mathf.MoveTowards(rb.linearVelocity.x, 0, 50f * Time.deltaTime), rb.linearVelocity.y);
+
+            if (currentState == CharacterState.Moving)
+            {
+                ChangeState(CharacterState.Idle);
+            }
         }
     }
 
@@ -196,5 +211,33 @@ public class CharacterBase : MonoBehaviour
         currentState = newState;
         // TODO: Trigger animations based on state changes
         // anim.Play(newState.ToString());
+    }
+
+    protected virtual void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Fighter"))
+        {
+            isTouchingFighter = true;
+        }
+    }
+
+    protected virtual void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Fighter"))
+        {
+            isTouchingFighter = false;
+        }
+    }
+
+    protected virtual void OnCollisionStay2D(Collision2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Fighter"))
+        {
+            if (transform.position.y > collision.transform.position.y + 0.2f)
+            {
+                float slideDirection = transform.position.x < collision.transform.position.x ? -1 : 1;
+                rb.AddForce(new Vector2(slideDirection * 50f, 0));
+            }
+        }
     }
 }
