@@ -28,6 +28,7 @@ public class CharacterBase : MonoBehaviour
 
     [Header("Movement")]
     public float pushSpeedMultiplier = 0.5f;
+    public float backSpeedMultiplier = 0.7f;
     private bool isTouchingFighter = false;
     public Transform opponent;
     public bool isFacingRight = true;
@@ -37,6 +38,7 @@ public class CharacterBase : MonoBehaviour
     {
         Idle,
         Moving,
+        MovingBackward,
         Jumping,
         Attacking,
         Blocking,
@@ -76,14 +78,23 @@ public class CharacterBase : MonoBehaviour
 
         if (direction != 0)
         {
-            float actualSpeed = isTouchingFighter ? moveSpeed * pushSpeedMultiplier : moveSpeed;
+            bool isBackingUp = (isFacingRight && direction < 0) || (!isFacingRight && direction > 0);
+
+            float currentSpeed = isBackingUp ? moveSpeed * backSpeedMultiplier : moveSpeed;
+
+            float actualSpeed = isTouchingFighter ? currentSpeed * pushSpeedMultiplier : currentSpeed;
 
             // Apply velocity using calculated speed
             rb.linearVelocity = new Vector2(direction * actualSpeed, rb.linearVelocity.y);
 
-            if (currentState == CharacterState.Idle)
+            CharacterState targetState = isBackingUp ? CharacterState.MovingBackward : CharacterState.Moving;
+
+            if (currentState == CharacterState.Idle || currentState == CharacterState.Moving || currentState == CharacterState.MovingBackward)
             {
-                ChangeState(CharacterState.Moving);
+                if (currentState != targetState)
+                {
+                    ChangeState(targetState);
+                }
             }
         }
 
@@ -91,7 +102,7 @@ public class CharacterBase : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(Mathf.MoveTowards(rb.linearVelocity.x, 0, 50f * Time.deltaTime), rb.linearVelocity.y);
 
-            if (currentState == CharacterState.Moving)
+            if (currentState == CharacterState.Moving || currentState == CharacterState.MovingBackward)
             {
                 ChangeState(CharacterState.Idle);
             }
