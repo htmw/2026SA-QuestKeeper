@@ -29,6 +29,8 @@ public class CharacterBase : MonoBehaviour
     [Header("Movement")]
     public float pushSpeedMultiplier = 0.5f;
     private bool isTouchingFighter = false;
+    public Transform opponent;
+    public bool isFacingRight = true;
 
     // The main states every fighter needs
     public enum CharacterState
@@ -58,6 +60,8 @@ public class CharacterBase : MonoBehaviour
         CheckGrounded();
 
         AttackLogic();
+
+        HandleFacing();
     }
 
 
@@ -121,6 +125,28 @@ public class CharacterBase : MonoBehaviour
                 ChangeState(CharacterState.Idle);
             }
         }
+    }
+
+    protected virtual void HandleFacing()
+    {
+        if (currentState == CharacterState.Dead || opponent == null) return;
+
+        if (transform.position.x < opponent.position.x && !isFacingRight)
+        {
+            Flip();
+        }
+        else if (transform.position.x > opponent.position.x && isFacingRight)
+        {
+            Flip();
+        }
+    }
+
+    protected virtual void Flip()
+    {
+        isFacingRight = !isFacingRight;
+        Vector3 currentScale = transform.localScale;
+        currentScale.x *= -1;
+        transform.localScale = currentScale;
     }
 
 
