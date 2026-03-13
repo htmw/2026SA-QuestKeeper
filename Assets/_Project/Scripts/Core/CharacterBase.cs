@@ -102,9 +102,22 @@ public class CharacterBase : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(Mathf.MoveTowards(rb.linearVelocity.x, 0, 50f * Time.deltaTime), rb.linearVelocity.y);
 
-            if (currentState == CharacterState.Moving || currentState == CharacterState.MovingBackward)
+            bool isPushedBackward = (isFacingRight && rb.linearVelocity.x < -0.1f) || (!isFacingRight && rb.linearVelocity.x > 0.1f);
+
+            if (isPushedBackward && isGrounded && currentState != CharacterState.Blocking && currentState != CharacterState.Hit && currentState != CharacterState.Dead)
             {
-                ChangeState(CharacterState.Idle);
+                if (currentState != CharacterState.MovingBackward)
+                {
+                    ChangeState(CharacterState.MovingBackward);
+                }
+            }
+
+            else if (currentState == CharacterState.Moving || currentState == CharacterState.MovingBackward)
+            {
+                if (Mathf.Abs(rb.linearVelocity.x) <= 0.1f)
+                {
+                    ChangeState(CharacterState.Idle);
+                }
             }
         }
     }
