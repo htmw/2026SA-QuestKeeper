@@ -26,6 +26,9 @@ public class GameManager : MonoBehaviour
     public GameObject player;
     public GameObject opponent;
 
+    [Header("Player Controller References")]
+    public TestPlayerCtrl playerCtrl;   
+
     [Header("Spawn Locations")]
     // Places players and opponents at their assigned spawn locations at the start of each match
     public Transform PlayerSpawnPoint;
@@ -54,14 +57,16 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
     {
-        // Scene is starting, set Match State to Loading
-        currState = MatchStates.Loading;
+        // Sets Match state to Loading (Players Spawn at assigned locations)
+        SetMatchState(MatchStates.Loading);
 
         // Place both fighters at their assigned positions
         PlaceFighters();
 
-        // After spawning / loading, switch to Countdown state
-        currState = MatchStates.Countdown;
+        if(playerCtrl != null)
+        {
+            playerCtrl.LockMovement();
+        }
 
         StartCoroutine(StartCountdown());
     }
@@ -97,6 +102,12 @@ public class GameManager : MonoBehaviour
         }
 
         SetMatchState(MatchStates.Playing);
+
+        // Unlock movement once countdown ends
+        if(playerCtrl != null)
+        {
+            playerCtrl.UnlockMovement();
+        }
     }
 
 
@@ -119,5 +130,6 @@ public class GameManager : MonoBehaviour
     public void SetMatchState(MatchStates newState)
     {
         currState = newState;
+        Debug.Log("Match State changed to: " + currState);
     }
 }
