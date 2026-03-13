@@ -41,7 +41,7 @@ public class GameManager : MonoBehaviour
     private GameObject spawnedOpponent;
 
     [Header("Player Controller References")]
-    public TestPlayerCtrl playerCtrl;
+    public PlayerController playerCtrl;
 
     [Header("AI Difficulty")]
     public AIDifficulty selectedDifficulty = AIDifficulty.Easy;
@@ -171,9 +171,6 @@ public class GameManager : MonoBehaviour
         {
             timerText.text = Mathf.CeilToInt(currTime).ToString();
         }
-
-
-        Debug.Log("Timer: " + Mathf.CeilToInt(currTime));
     }
 
     void Pause()
@@ -293,15 +290,16 @@ public class GameManager : MonoBehaviour
             // Spawns AI Difficulty Opponent
             spawnedOpponent = Instantiate(spawnPrefab, OpponentSpawnPoint.position, Quaternion.identity);
 
-            opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
-            if(playerCtrl != null)
+            // Make sure opponent has correct character reference
+            CharacterBase playerBase = player.GetComponent<CharacterBase>();
+            CharacterBase aiBase = spawnedOpponent.GetComponent<CharacterBase>();
+
+            if (playerBase != null && aiBase != null)
             {
-                playerCtrl.opponentHealth = opponentHealth;
+                playerBase.opponent = spawnedOpponent.transform;
+                aiBase.opponent = player.transform;
             }
             Debug.Log("Spawned AI Difficulty: " + selectedDifficulty);
-        }
-        {
-            
         }
     }
 }

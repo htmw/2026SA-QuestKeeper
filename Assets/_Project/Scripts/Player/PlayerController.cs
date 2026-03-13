@@ -8,16 +8,20 @@ public class PlayerController : MonoBehaviour
     private CharacterBase fighter;
     private PlayerControls controls;
 
+    public bool isInputLocked = false;
+    public void LockMovement() { isInputLocked = true; }
+    public void UnlockMovement() { isInputLocked = false; }
+
     private void Awake()
     {
         fighter = GetComponent<CharacterBase>();
         controls = new PlayerControls();
 
         // -- EVENT BINDINGS --
-        controls.Player.Jump.performed += ctx => fighter.Jump();
-        controls.Player.Attack.performed += ctx => fighter.Attack();
+        controls.Player.Jump.performed += ctx => { if (!isInputLocked) fighter.Jump(); };
+        controls.Player.Attack.performed += ctx => { if (!isInputLocked) fighter.Attack(); };
 
-        controls.Player.Block.started += ctx => fighter.Block(true);
+        controls.Player.Block.started += ctx => { if (!isInputLocked) fighter.Block(true); };
         controls.Player.Block.canceled += ctx => fighter.Block(false);
     }
 
@@ -35,10 +39,12 @@ public class PlayerController : MonoBehaviour
     {
         // -- CONTINOUS POLLING -- 
 
+
+
         // Read the joystick/WASD as a vector2 (X is left/right, Y is up/down)
-        Vector2 moveInput = controls.Player.Move.ReadValue<Vector2>();
-        
-        // Since this is a 2D fighting game, we only care about the X value
-        fighter.Move(moveInput.x);
+        float moveX = isInputLocked ? 0f : controls.Player.Move.ReadValue<Vector2>().x;
+
+        fighter.Move(moveX);
+
     }
 }
