@@ -75,6 +75,11 @@ public class TestPlayerCtrl : MonoBehaviour
         }
     }
 
+    /*Combat System
+     * Punching
+     * Combos
+     * etc.
+     */
       private void CombatSystem()
     {
         if (Mouse.current.leftButton.wasPressedThisFrame)

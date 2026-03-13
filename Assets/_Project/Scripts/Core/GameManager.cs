@@ -45,10 +45,10 @@ public class GameManager : MonoBehaviour
 
     [Header("AI Difficulty")]
     public AIDifficulty selectedDifficulty = AIDifficulty.Easy;
+
     [Header("Round Timer")]
     public float roundTime = 30f;
     private float currTime;
-    public TextMeshProUGUI timerText;
 
     [Header("Health")]
     public HealthSystem playerHealth;
@@ -64,8 +64,10 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     public TextMeshProUGUI countdownTxt;
+    public TextMeshProUGUI endGameTxt;
+    public TextMeshProUGUI timerText;
 
-   
+
     private void Awake()
     {
         // Makes sure only 1 Game Manager exists
@@ -106,6 +108,7 @@ public class GameManager : MonoBehaviour
             opponentHealth.ResetHealth();
         }
 
+        // Timer
         currTime = roundTime;
 
         if(playerCtrl != null)
@@ -113,6 +116,7 @@ public class GameManager : MonoBehaviour
             playerCtrl.LockMovement();
         }
 
+        // Start Match Countdown
         StartCoroutine(StartCountdown());
 
         currTime = roundTime;
@@ -120,7 +124,12 @@ public class GameManager : MonoBehaviour
         if (timerText != null)
         {
             timerText.text = Mathf.CeilToInt(currTime).ToString();
-        }      
+        }    
+        
+        if (endGameTxt != null)
+        {
+            endGameTxt.text = "";
+        }
     }
 
     private void Update()
@@ -130,32 +139,61 @@ public class GameManager : MonoBehaviour
         if(currState == MatchStates.Playing)
         {
             Timer();
+            CheckEndGame();
         }
-
-        CheckHealth();
     }
 
-    void CheckHealth()
+    void CheckEndGame()
     {
         if (currState != MatchStates.Playing)
         {
             return;
         }
 
-        // Lets Game Manager know when to end the round
+        if (opponentHealth != null)
+        {
+            Debug.Log("Opponent Current Health: " + opponentHealth.currHealth);
+        }
+
+        // Player loses
         if (playerHealth != null && playerHealth.currHealth <= 0)
         {
-            Debug.Log("Player Died");
             SetMatchState(MatchStates.RoundOver);
+
+            if (playerCtrl != null)
+            {
+                playerCtrl.LockMovement();
+            }
+
+            if (endGameTxt != null)
+            {
+                endGameTxt.text = "TRY AGAIN";
+            }
+
+            Debug.Log("Player lost");
+            return;
         }
 
-        if(opponentHealth != null && opponentHealth.currHealth <= 0)
+        // Opponent loses
+        if (opponentHealth != null && opponentHealth.currHealth <= 0)
         {
-            Debug.Log("Opponent Died");
             SetMatchState(MatchStates.RoundOver);
-        }
 
+            if (playerCtrl != null)
+            {
+                playerCtrl.LockMovement();
+            }
+
+            if (endGameTxt != null)
+            {
+                endGameTxt.text = "VICTORY - Return to Main Menu";
+            }
+
+            Debug.Log("Player won");
+            return;
+        }
     }
+
     // Basic Timer Function
     void Timer()
     {
@@ -253,11 +291,6 @@ public class GameManager : MonoBehaviour
         if (player != null && PlayerSpawnPoint != null)
         {
             player.transform.position = PlayerSpawnPoint.position;
-        }
-
-        if (opponent != null && OpponentSpawnPoint != null)
-        {
-            opponent.transform.position = OpponentSpawnPoint.position;
         }
     }
 

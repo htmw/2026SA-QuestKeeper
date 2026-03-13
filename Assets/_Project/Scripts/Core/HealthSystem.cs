@@ -16,6 +16,7 @@ public class HealthSystem : MonoBehaviour
         Debug.Log(gameObject.name + " HP: " + currHealth);
     }
 
+    // Reset Health
     public void ResetHealth()
     {
         currHealth = maxHealth;
