@@ -176,6 +176,11 @@ public class CharacterBase : MonoBehaviour
         {
             Die();
         }
+
+        if (currentHealth > 0)
+        {
+            Invoke("RecoverFromHit", 0.3f); // Simulate hit stun duration
+        }
     }
 
     protected virtual void AttackLogic()
@@ -189,6 +194,14 @@ public class CharacterBase : MonoBehaviour
 
                 ChangeState(isGrounded ? CharacterState.Idle : CharacterState.Jumping);
             }
+        }
+    }
+
+    protected virtual void RecoverFromHit()
+    {
+        if (currentState == CharacterState.Hit)
+        {
+            ChangeState(isGrounded ? CharacterState.Idle : CharacterState.Jumping);
         }
     }
 
