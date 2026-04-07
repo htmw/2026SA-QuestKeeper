@@ -362,7 +362,7 @@ public class GameManager : MonoBehaviour
         // Player Loses
         if (playerBase != null && playerBase.currentHealth <= 0)
         {
-            if (TryEndTrainingEpisode()) return;
+            if (TryEndTrainingEpisode(true)) return;
 
             SetMatchState(MatchStates.RoundOver);
 
@@ -386,7 +386,7 @@ public class GameManager : MonoBehaviour
         // Opponent Loses
         if (opponentBase != null && opponentBase.currentHealth <= 0)
         {
-            if (TryEndTrainingEpisode()) return;
+            if (TryEndTrainingEpisode(false)) return;
 
             SetMatchState(MatchStates.RoundOver);
 
@@ -412,13 +412,22 @@ public class GameManager : MonoBehaviour
     // HARD AI LOGIC
 
     // Helper to check if we are training
-    private bool TryEndTrainingEpisode()
+    private bool TryEndTrainingEpisode(bool aiWon)
     {
         if (spawnedOpponent != null)
         {
             HardAIAgent agent = spawnedOpponent.GetComponent<HardAIAgent>();
             if (agent != null && agent.isTrainingMode)
             {
+                if (aiWon)
+                {
+                    agent.AddReward(1f); // Reward for winning
+                }
+                else
+                {
+                    agent.AddReward(-1f); // Penalty for losing
+                }
+
                 agent.EndEpisode();
                 return true;
             }
@@ -426,22 +435,22 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
-    // The ML-Agent will call this to instantly reset the arena
+    // Instantly reset the arena
     public void ResetForTraining()
     {
-        // 1. Reset the timer
+        // Reset the timer
         currTime = roundTime;
 
-        // 2. Snap everyone back to their corners
+        // Snap fighters back to their spawn
         PlaceFighters();
 
-        // 3. Reset Player stats & physics
+        // Reset Player stats & physics
         CharacterBase pBase = player.GetComponent<CharacterBase>();
         pBase.currentHealth = pBase.maxHealth;
         pBase.ChangeState(CharacterBase.CharacterState.Idle);
         player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
 
-        // 4. Reset AI stats & physics
+        // Reset AI stats & physics
         CharacterBase aiBase = spawnedOpponent.GetComponent<CharacterBase>();
         aiBase.currentHealth = aiBase.maxHealth;
         aiBase.ChangeState(CharacterBase.CharacterState.Idle);

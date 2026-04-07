@@ -11,6 +11,9 @@ public class HardAIAgent : Agent
     private CharacterBase fighter;
     private CharacterBase opponentBase;
 
+    private int myPreviousHealth;
+    private int oppPreviousHealth;
+
     public override void Initialize()
     {
         fighter = GetComponent<CharacterBase>();
@@ -22,7 +25,10 @@ public class HardAIAgent : Agent
         {
             GameManager.Instance.ResetForTraining();
         }
+        if (fighter != null) myPreviousHealth = fighter.currentHealth;
+        if (opponentBase != null) oppPreviousHealth = opponentBase.currentHealth;
     }
+
 
     public override void CollectObservations(VectorSensor sensor)
     {
@@ -117,5 +123,30 @@ public class HardAIAgent : Agent
         if (Keyboard.current.fKey.isPressed) discreteActionsOut[1] = 1; // Attack
         if (Keyboard.current.wKey.isPressed) discreteActionsOut[2] = 1; // Jump
         if (Keyboard.current.sKey.isPressed) discreteActionsOut[3] = 1; // Block
+    }
+
+    private void Update()
+    {
+        if (!isTrainingMode || fighter == null || opponentBase == null) return;
+        if (GameManager.Instance.currState != GameManager.MatchStates.Playing) return;
+
+        // Micro Penalty for wasting time
+        AddReward(-0.0005f);
+
+        // Penalty for taking damage
+        if (fighter.currentHealth < myPreviousHealth)
+        {
+            float damageTaken = myPreviousHealth - fighter.currentHealth;
+            AddReward(-0.01f * damageTaken);
+            myPreviousHealth = fighter.currentHealth;
+        }
+
+        // Reward for dealing damage
+        if (opponentBase.currentHealth < oppPreviousHealth)
+        {
+            float damageDealt = oppPreviousHealth - opponentBase.currentHealth;
+            AddReward(0.01f * damageDealt);
+            oppPreviousHealth = opponentBase.currentHealth;
+        }
     }
 }
