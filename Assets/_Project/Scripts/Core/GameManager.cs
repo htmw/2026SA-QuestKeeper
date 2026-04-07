@@ -193,6 +193,7 @@ public class GameManager : MonoBehaviour
         {
             currTime = 0;
             Debug.Log("Round Over!");
+            if (TryEndTrainingEpisode()) return;
         }
 
         if (timerText != null)
@@ -361,6 +362,8 @@ public class GameManager : MonoBehaviour
         // Player Loses
         if (playerBase != null && playerBase.currentHealth <= 0)
         {
+            if (TryEndTrainingEpisode()) return;
+
             SetMatchState(MatchStates.RoundOver);
 
             if (playerCtrl != null)
@@ -383,6 +386,8 @@ public class GameManager : MonoBehaviour
         // Opponent Loses
         if (opponentBase != null && opponentBase.currentHealth <= 0)
         {
+            if (TryEndTrainingEpisode()) return;
+
             SetMatchState(MatchStates.RoundOver);
 
             if (playerCtrl != null)
@@ -401,5 +406,45 @@ public class GameManager : MonoBehaviour
             }
             return;
         }
+    }
+
+
+    // HARD AI LOGIC
+
+    // Helper to check if we are training
+    private bool TryEndTrainingEpisode()
+    {
+        if (spawnedOpponent != null)
+        {
+            HardAIAgent agent = spawnedOpponent.GetComponent<HardAIAgent>();
+            if (agent != null && agent.isTrainingMode)
+            {
+                agent.EndEpisode();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // The ML-Agent will call this to instantly reset the arena
+    public void ResetForTraining()
+    {
+        // 1. Reset the timer
+        currTime = roundTime;
+
+        // 2. Snap everyone back to their corners
+        PlaceFighters();
+
+        // 3. Reset Player stats & physics
+        CharacterBase pBase = player.GetComponent<CharacterBase>();
+        pBase.currentHealth = pBase.maxHealth;
+        pBase.ChangeState(CharacterBase.CharacterState.Idle);
+        player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+
+        // 4. Reset AI stats & physics
+        CharacterBase aiBase = spawnedOpponent.GetComponent<CharacterBase>();
+        aiBase.currentHealth = aiBase.maxHealth;
+        aiBase.ChangeState(CharacterBase.CharacterState.Idle);
+        spawnedOpponent.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
     }
 }
