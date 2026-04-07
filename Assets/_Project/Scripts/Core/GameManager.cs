@@ -193,7 +193,7 @@ public class GameManager : MonoBehaviour
         {
             currTime = 0;
             Debug.Log("Round Over!");
-            if (TryEndTrainingEpisode()) return;
+            if (TryEndTrainingEpisode(false)) return;
         }
 
         if (timerText != null)
