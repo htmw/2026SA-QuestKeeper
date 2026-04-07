@@ -193,7 +193,7 @@ public class GameManager : MonoBehaviour
         {
             currTime = 0;
             Debug.Log("Round Over!");
-            if (TryEndTrainingEpisode(false)) return;
+            if (TryEndTrainingEpisode(0)) return;
         }
 
         if (timerText != null)
@@ -362,7 +362,7 @@ public class GameManager : MonoBehaviour
         // Player Loses
         if (playerBase != null && playerBase.currentHealth <= 0)
         {
-            if (TryEndTrainingEpisode(true)) return;
+            if (TryEndTrainingEpisode(1)) return;
 
             SetMatchState(MatchStates.RoundOver);
 
@@ -386,7 +386,7 @@ public class GameManager : MonoBehaviour
         // Opponent Loses
         if (opponentBase != null && opponentBase.currentHealth <= 0)
         {
-            if (TryEndTrainingEpisode(false)) return;
+            if (TryEndTrainingEpisode(2)) return;
 
             SetMatchState(MatchStates.RoundOver);
 
@@ -412,37 +412,43 @@ public class GameManager : MonoBehaviour
     // HARD AI LOGIC
 
     // Helper to check if we are training
-    private bool TryEndTrainingEpisode(bool aiWon)
+    private bool TryEndTrainingEpisode(int winner)
     {
-        if (spawnedOpponent != null)
-        {
-            HardAIAgent agent = spawnedOpponent.GetComponent<HardAIAgent>();
-            if (agent != null && agent.isTrainingMode)
-            {
-                if (aiWon)
-                {
-                    agent.AddReward(1f); // Reward for winning
-                }
-                else
-                {
-                    agent.AddReward(-1f); // Penalty for losing
-                }
+        HardAIAgent oppAgent = spawnedOpponent != null ? spawnedOpponent.GetComponent<HardAIAgent>() : null;
+        HardAIAgent playerAgent = player != null ? player.GetComponent<HardAIAgent>() : null;
 
-                agent.EndEpisode();
-                return true;
-            }
+        bool isTraining = false;
+
+        if (oppAgent != null && oppAgent.isTrainingMode)
+        {
+            if (winner == 1) oppAgent.AddReward(1f);           // Jackpot
+            else if (winner == 2) oppAgent.AddReward(-1f);     // Failure
+            else oppAgent.AddReward(-1f);                      // Draw
+
+            oppAgent.EndEpisode();
+            isTraining = true;
         }
-        return false;
+
+        if (playerAgent != null && playerAgent.isTrainingMode)
+        {
+            if (winner == 2) playerAgent.AddReward(1f);        // Jackpot
+            else if (winner == 1) playerAgent.AddReward(-1f);  // Failure
+            else playerAgent.AddReward(-1f);                   // Draw
+
+            playerAgent.EndEpisode();
+            isTraining = true;
+        }
+
+        return isTraining;
     }
 
     // Instantly reset the arena
     public void ResetForTraining()
     {
-        // Reset the timer
         currTime = roundTime;
 
-        // Snap fighters back to their spawn
-        PlaceFighters();
+        if (player != null && PlayerSpawnPoint != null) player.transform.position = PlayerSpawnPoint.position;
+        if (spawnedOpponent != null && OpponentSpawnPoint != null) spawnedOpponent.transform.position = OpponentSpawnPoint.position;
 
         // Reset Player stats & physics
         CharacterBase pBase = player.GetComponent<CharacterBase>();

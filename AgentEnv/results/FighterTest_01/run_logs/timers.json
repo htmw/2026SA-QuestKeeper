@@ -1,0 +1,47 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1775582175",
+        "python_version": "3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]",
+        "command_line_arguments": "C:\\Unity Games\\AdaptiveArena\\2026SA-QuestKeeper\\AgentEnv\\ml-env\\Scripts\\mlagents-learn trainer_config.yaml --run-id=FighterTest_01 --force",
+        "mlagents_version": "1.1.0",
+        "mlagents_envs_version": "1.1.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "2.11.0+cpu",
+        "numpy_version": "1.23.5",
+        "end_time_seconds": "1775582201"
+    },
+    "total": 25.892040400009137,
+    "count": 1,
+    "self": 0.004083000021637417,
+    "children": {
+        "run_training.setup": {
+            "total": 0.05929489999834914,
+            "count": 1,
+            "self": 0.05929489999834914
+        },
+        "TrainerController.start_learning": {
+            "total": 25.82866249998915,
+            "count": 1,
+            "self": 0.0002807999844662845,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 25.82837329999893,
+                    "count": 1,
+                    "self": 25.82837329999893
+                },
+                "trainer_threads": {
+                    "total": 1.100008375942707e-06,
+                    "count": 1,
+                    "self": 1.100008375942707e-06
+                },
+                "TrainerController._save_models": {
+                    "total": 7.299997378140688e-06,
+                    "count": 1,
+                    "self": 7.299997378140688e-06
+                }
+            }
+        }
+    }
+}

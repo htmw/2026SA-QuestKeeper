@@ -34,7 +34,7 @@ public class HardAIAgent : Agent
     {
         
         
-        if (fighter == null || opponentBase == null) return;
+        if (fighter == null) return;
 
         if (opponentBase == null)
         {
