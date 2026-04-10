@@ -42,6 +42,20 @@ public class MediumAIController : MonoBehaviour
 
     // Calculates distance to player
     private float distanceToPlayer;
+
+    [Header("Combat")]
+    // How fast the AI reacts to the player attack before blocking
+    public float minReactionTime = 0.2f;
+    public float maxReactionTime = 0.5f;
+
+    private bool isReactingToAttack = false;
+
+    public float attackCooldown = 1.5f;
+    private float attackCooldownTimer = 0f;
+    private bool canAttack = true;
+
+
+
     private void Start()
     {
         // Grab AI
@@ -80,24 +94,94 @@ public class MediumAIController : MonoBehaviour
             EvaluateEnvironment();
         }
 
+        if (!canAttack)
+        {
+            attackCooldownTimer -= Time.deltaTime;
+            if (attackCooldownTimer <= 0f)
+            {
+                canAttack = true;
+            }
+        }
+
         ExecuteState();
     }
 
     private void EvaluateEnvironment()
     {
-        if (distanceToPlayer > attackRange)
+        // Player is attacking and AI is in range -> Block
+        if (player.currentState == CharacterBase.CharacterState.Attacking && distanceToPlayer <= attackRange && !isReactingToAttack)
         {
-            SetAIState(AIStates.MoveFWD);
+            isReactingToAttack = true;
+            float reactionTime = Random.Range(minReactionTime, maxReactionTime);
+            Invoke("TriggerBlock", reactionTime);
+            return;
         }
-        else if (distanceToPlayer < tooCloseRange)
+
+        // Player stopped attacking -> stop blocking
+        if (player.currentState != CharacterBase.CharacterState.Attacking && self.currentState == CharacterBase.CharacterState.Blocking)
+        {
+            self.Block(false);
+            isReactingToAttack = false;
+            return;
+        }
+
+        // Movement Logic [Left/Right]
+        if (distanceToPlayer < tooCloseRange) 
         {
             SetAIState(AIStates.MoveBack);
         }
+        else if (distanceToPlayer > attackRange)
+        {
+             SetAIState(AIStates.MoveFWD); 
+        }
         else
         {
-            // In attack range, remains idle for now
-            SetAIState(AIStates.Idle);
+            // In attack range - Decide what to do
+            if (player.currentState == CharacterBase.CharacterState.Blocking)
+            {
+                // Player is blocking - 33% each
+                float roll = Random.Range(0f, 1f);
+                if(roll < 0.33f)
+                {
+                    SetAIState(AIStates.Idle); // Wait
+                }
+                else if (roll < 0.66f)
+                {
+                    SetAIState(AIStates.Jump); // Jump 
+                }
+                else
+                {
+                    SetAIState(AIStates.MoveBack); // Move away
+                }
+            }
+            else
+            {
+                // Player isn't blocking -> Attack
+                TriggerAttack();
+            }
         }
+    }
+
+    private void TriggerAttack()
+    {
+        if (!canAttack) return;
+        SetAIState(AIStates.Attack);
+        self.Attack();
+
+        // Start cooldown
+        canAttack = false;
+        attackCooldownTimer = attackCooldown;
+    }
+
+    private void TriggerBlock()
+    {
+        // Only block if plyaer is still attacking 
+        if (player.currentState == CharacterBase.CharacterState.Attacking)
+        {
+            SetAIState(AIStates.Block);
+            self.Block(true);
+        }
+        isReactingToAttack = false;
     }
 
     private void ExecuteState()
@@ -115,6 +199,14 @@ public class MediumAIController : MonoBehaviour
                 break;
 
             case AIStates.Idle:
+                self.Move(0f);
+                break;
+
+            case AIStates.Block:
+                self.Move(0f);
+                break;
+
+            case AIStates.Attack:
                 self.Move(0f);
                 break;
         }
