@@ -54,7 +54,13 @@ public class MediumAIController : MonoBehaviour
     private float attackCooldownTimer = 0f;
     private bool canAttack = true;
 
+    // Health threshold for defensive mode
+    public float lowHealthThreshold = 0.3f;
 
+    // Jump cooldown so AI doesn't spam jump
+    public float jumpCooldown = 1.5f;
+    private float jumpCooldownTimer = 0f;
+    private bool canJump = true;
 
     private void Start()
     {
@@ -103,11 +109,37 @@ public class MediumAIController : MonoBehaviour
             }
         }
 
+        if (!canJump)
+        {
+            jumpCooldownTimer -= Time.deltaTime;
+            if (jumpCooldownTimer <= 0f)
+            {
+                canJump = true;
+            }
+        }
+
         ExecuteState();
     }
 
     private void EvaluateEnvironment()
     {
+        // Low Health defensive mode [50/50 block or jump]
+        float healthPercent = (float)self.currentHealth / self.maxHealth;
+        if (healthPercent <= lowHealthThreshold)
+        {
+            float roll = Random.Range(0f, 1f);
+            if (roll < 0.5f)
+            {
+                SetAIState(AIStates.Block);
+                self.Block(true);
+            }
+            else
+            {
+                TriggerJump();
+            }
+
+            return;
+        }
         // Player is attacking and AI is in range -> Block
         if (player.currentState == CharacterBase.CharacterState.Attacking && distanceToPlayer <= attackRange && !isReactingToAttack)
         {
@@ -162,6 +194,17 @@ public class MediumAIController : MonoBehaviour
         }
     }
 
+    private void TriggerJump()
+    {
+        if (!canJump || !self.isGrounded) return;
+
+        SetAIState(AIStates.Jump);
+        self.Jump();
+
+        canJump = false;
+        jumpCooldownTimer = jumpCooldown;
+    }
+
     private void TriggerAttack()
     {
         if (!canAttack) return;
@@ -207,6 +250,9 @@ public class MediumAIController : MonoBehaviour
                 break;
 
             case AIStates.Attack:
+                self.Move(0f);
+                break;
+            case AIStates.Jump:
                 self.Move(0f);
                 break;
         }
