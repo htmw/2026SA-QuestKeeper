@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class DifficultyNavigation : MonoBehaviour
 {
@@ -11,27 +12,27 @@ public class DifficultyNavigation : MonoBehaviour
     // EASY BUTTON
     public void LoadEasy()
     {
-        GameManager.Instance.SetDifficulty("Easy");
-        SceneManager.LoadScene("MainBattle");
+       // GameManager.Instance.selectedDifficulty = GameManager.AIDifficulty.Easy;
+        SceneManager.LoadScene("Scn_Battle_Level1");
     }
 
     // MEDIUM BUTTON
     public void LoadMedium()
     {
-        GameManager.Instance.SetDifficulty("Medium");
-        SceneManager.LoadScene("MainBattle");
+       // GameManager.Instance.selectedDifficulty = GameManager.AIDifficulty.Medium;
+        SceneManager.LoadScene("Scn_Battle_Level1");
     }
 
     // HARD BUTTON
     public void LoadHard()
     {
-        GameManager.Instance.SetDifficulty("Hard");
-        SceneManager.LoadScene("MainBattle");
+        //GameManager.Instance.selectedDifficulty = GameManager.AIDifficulty.Hard;
+        SceneManager.LoadScene("Scn_Battle_Level1");
     }
 
     // BACK BUTTON → Return to Main Menu
     public void BackToMainMenu()
     {
-        SceneManager.LoadScene("MainMenu");
+        SceneManager.LoadScene("Scn_MainMenu");
     }
 }

@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/_Project/Scenes/Scn_MainMenu.unity
     guid: 4ff0690ad2dc1514eb3d841fe769b9f8
   - enabled: 1
+    path: Assets/_Project/Scenes/Scn_DifficultyMenu.unity
+    guid: 76f3248cae2a5574d92aa7f0f9652886
+  - enabled: 1
     path: Assets/_Project/Scenes/Scn_Battle_Level1.unity
     guid: a285cb38e4f116346a019b1504eed9c4
   m_configObjects:
