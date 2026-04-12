@@ -95,6 +95,12 @@ public class HardAIAgent : Agent
         if (attackInput == 1)
         {
             fighter.Attack();
+
+            float distance = Vector2.Distance(transform.localPosition, opponentBase.transform.localPosition);
+            if (distance > 2.5f)
+            {
+                AddReward(-0.05f); // Penalty for attacking when too far
+            }
         }
 
         // Jump
@@ -125,13 +131,20 @@ public class HardAIAgent : Agent
         if (Keyboard.current.sKey.isPressed) discreteActionsOut[3] = 1; // Block
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (!isTrainingMode || fighter == null || opponentBase == null) return;
         if (GameManager.Instance.currState != GameManager.MatchStates.Playing) return;
 
         // Micro Penalty for wasting time
         AddReward(-0.0005f);
+
+        // Penalty for not moving close
+        float currentDistance = Vector2.Distance(transform.localPosition, opponentBase.transform.localPosition);
+        if (currentDistance > 3.0f)
+        {
+            AddReward(-0.001f);
+        }
 
         // Penalty for taking damage
         if (fighter.currentHealth < myPreviousHealth)

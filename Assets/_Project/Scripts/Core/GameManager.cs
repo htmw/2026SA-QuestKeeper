@@ -421,9 +421,9 @@ public class GameManager : MonoBehaviour
 
         if (oppAgent != null && oppAgent.isTrainingMode)
         {
-            if (winner == 1) oppAgent.AddReward(1f);           // Jackpot
+            if (winner == 1) oppAgent.AddReward(2f);           // Jackpot
             else if (winner == 2) oppAgent.AddReward(-1f);     // Failure
-            else oppAgent.AddReward(-1f);                      // Draw
+            else oppAgent.AddReward(-5f);                      // Draw
 
             oppAgent.EndEpisode();
             isTraining = true;
@@ -431,9 +431,9 @@ public class GameManager : MonoBehaviour
 
         if (playerAgent != null && playerAgent.isTrainingMode)
         {
-            if (winner == 2) playerAgent.AddReward(1f);        // Jackpot
+            if (winner == 2) playerAgent.AddReward(2f);        // Jackpot
             else if (winner == 1) playerAgent.AddReward(-1f);  // Failure
-            else playerAgent.AddReward(-1f);                   // Draw
+            else playerAgent.AddReward(-5f);                   // Draw
 
             playerAgent.EndEpisode();
             isTraining = true;

@@ -183,7 +183,7 @@ public class CharacterBase : MonoBehaviour
     public virtual void Attack()
     {
         // Basic attack like a punch. May be added to or replaced later based on abilities
-        if (currentState != CharacterState.Attacking && currentState != CharacterState.Dead)
+        if (currentState != CharacterState.Attacking && currentState != CharacterState.Dead && currentState != CharacterState.Blocking)
         {
             if (isGrounded)
             {
@@ -202,7 +202,7 @@ public class CharacterBase : MonoBehaviour
 
     public virtual void Block(bool isBlocking)
     {
-        if (currentState == CharacterState.Dead || currentState == CharacterState.Jumping) return;
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Jumping || currentState == CharacterState.Attacking) return;
 
         if (isBlocking)
         {
