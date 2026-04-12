@@ -38,12 +38,12 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         // -- CONTINOUS POLLING -- 
-
-
-
+        
         // Read the joystick/WASD as a vector2 (X is left/right, Y is up/down)
         float moveX = isInputLocked ? 0f : controls.Player.Move.ReadValue<Vector2>().x;
 
+        // Temp Debug
+        Debug.Log("MoveX: " + moveX);
         fighter.Move(moveX);
 
     }

@@ -64,6 +64,8 @@ public class CharacterBase : MonoBehaviour
         AttackLogic();
 
         HandleFacing();
+
+        Debug.Log(gameObject.name + " state: " + currentState); // temp
     }
 
 
@@ -238,7 +240,7 @@ public class CharacterBase : MonoBehaviour
 
         if (currentHealth > 0)
         {
-            Invoke("RecoverFromHit", 0.3f); // Simulate hit stun duration
+            Invoke("RecoverFromHit", 0.5f); // Simulate hit stun duration
         }
     }
 
@@ -260,6 +262,7 @@ public class CharacterBase : MonoBehaviour
     {
         if (currentState == CharacterState.Hit)
         {
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
             ChangeState(isGrounded ? CharacterState.Idle : CharacterState.Jumping);
         }
     }
@@ -309,7 +312,7 @@ public class CharacterBase : MonoBehaviour
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Fighter"))
         {
-            if (transform.position.y > collision.transform.position.y + 0.2f)
+            if (transform.position.y > collision.transform.position.y + 0.5f)
             {
                 float slideDirection = transform.position.x < collision.transform.position.x ? -1 : 1;
                 rb.AddForce(new Vector2(slideDirection * 50f, 0));
