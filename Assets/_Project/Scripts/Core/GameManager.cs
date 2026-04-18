@@ -89,6 +89,8 @@ public class GameManager : MonoBehaviour
         // Sets Match state to Loading (Players Spawn at assigned locations)
         SetMatchState(MatchStates.Loading);
 
+        selectedDifficulty = (AIDifficulty)PlayerPrefs.GetInt("MatchDifficulty", 0);
+
         // Place both fighters at their assigned positions
         PlaceFighters();
         SpawnOpponent();
