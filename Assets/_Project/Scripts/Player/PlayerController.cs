@@ -23,6 +23,10 @@ public class PlayerController : MonoBehaviour
 
         controls.Player.Block.started += ctx => { if (!isInputLocked) fighter.Block(true); };
         controls.Player.Block.canceled += ctx => fighter.Block(false);
+
+        controls.Player.Kick.performed += ctx => { if (!isInputLocked) fighter.Kick(); };
+
+
     }
 
     void OnEnable()
@@ -43,7 +47,7 @@ public class PlayerController : MonoBehaviour
         float moveX = isInputLocked ? 0f : controls.Player.Move.ReadValue<Vector2>().x;
 
         // Temp Debug
-        Debug.Log("MoveX: " + moveX);
+       // Debug.Log("MoveX: " + moveX);  Commented out temporarily due to receiving an error
         fighter.Move(moveX);
 
     }

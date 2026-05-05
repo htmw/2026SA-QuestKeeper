@@ -25,6 +25,8 @@ public class CharacterBase : MonoBehaviour
     public GameObject basicAttackHitbox;
     public float attackDuration = 0.2f;
     private float attackTimer;
+    public float kickDuration = 0.3f;
+    private float kickTimer;
 
     [Header("Movement")]
     public float pushSpeedMultiplier = 0.5f;
@@ -43,7 +45,8 @@ public class CharacterBase : MonoBehaviour
         Attacking,
         Blocking,
         Hit,
-        Dead
+        Dead,
+        Kick
     }
 
     [Header("Components")]
@@ -219,6 +222,25 @@ public class CharacterBase : MonoBehaviour
         }
     }
 
+    public virtual void Kick()
+    {
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Blocking || currentState == CharacterState.Kick) return;
+
+        if (isGrounded)
+        {
+            // Stops horizontal movement when kicking
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+        }
+
+        ChangeState(CharacterState.Kick);
+        kickTimer = kickDuration;
+
+        if (basicAttackHitbox != null) basicAttackHitbox.SetActive(true);
+
+        // Temp Debug to test Kick mechanic until animation is placed in
+        Debug.Log(gameObject.name + " kicked!");
+    }
+
     public virtual void TakeDamage(int damage)
     {
         if (currentState == CharacterState.Dead) return;
@@ -256,6 +278,17 @@ public class CharacterBase : MonoBehaviour
                 ChangeState(isGrounded ? CharacterState.Idle : CharacterState.Jumping);
             }
         }
+
+        if (currentState == CharacterState.Kick)
+        {
+            kickTimer -= Time.deltaTime;
+            if (kickTimer <= 0)
+            {
+                if (basicAttackHitbox != null) basicAttackHitbox.SetActive(false);
+                ChangeState(isGrounded ? CharacterState.Idle : CharacterState.Jumping);
+            }
+        }
+
     }
 
     protected virtual void RecoverFromHit()
@@ -288,7 +321,10 @@ public class CharacterBase : MonoBehaviour
 
         if (anim != null)
         {
-            anim.Play(newState.ToString());
+            if (anim.HasState(0, Animator.StringToHash(newState.ToString())))
+            {
+                anim.Play(newState.ToString());
+            }
         }
     }
 

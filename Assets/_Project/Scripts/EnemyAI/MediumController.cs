@@ -11,7 +11,8 @@ public class MediumAIController : MonoBehaviour
         MoveBack,
         Attack,
         Block,
-        Jump
+        Jump,
+        Kick
     }
 
     [Header("AI State")]
@@ -123,23 +124,27 @@ public class MediumAIController : MonoBehaviour
 
     private void EvaluateEnvironment()
     {
-        // Low Health defensive mode [50/50 block or jump]
+        // Low Health defensive mode [33% block, jump, or attack]
         float healthPercent = (float)self.currentHealth / self.maxHealth;
         if (healthPercent <= lowHealthThreshold)
         {
             float roll = Random.Range(0f, 1f);
-            if (roll < 0.5f)
+            if (roll < 0.33f)
             {
                 SetAIState(AIStates.Block);
                 self.Block(true);
             }
-            else
+            else if (roll < 0.66f)
             {
                 TriggerJump();
             }
-
+            else
+            {
+                TriggerAttack();
+            }
             return;
         }
+
         // Player is attacking and AI is in range -> Block
         if (player.currentState == CharacterBase.CharacterState.Attacking && distanceToPlayer <= attackRange && !isReactingToAttack)
         {
@@ -158,13 +163,13 @@ public class MediumAIController : MonoBehaviour
         }
 
         // Movement Logic [Left/Right]
-        if (distanceToPlayer < tooCloseRange) 
+        if (distanceToPlayer < tooCloseRange)
         {
             SetAIState(AIStates.MoveBack);
         }
         else if (distanceToPlayer > attackRange)
         {
-             SetAIState(AIStates.MoveFWD); 
+            SetAIState(AIStates.MoveFWD);
         }
         else
         {
@@ -173,13 +178,13 @@ public class MediumAIController : MonoBehaviour
             {
                 // Player is blocking - 33% each
                 float roll = Random.Range(0f, 1f);
-                if(roll < 0.33f)
+                if (roll < 0.33f)
                 {
                     SetAIState(AIStates.Idle); // Wait
                 }
                 else if (roll < 0.66f)
                 {
-                    SetAIState(AIStates.Jump); // Jump 
+                    SetAIState(AIStates.Jump); // Jump
                 }
                 else
                 {
@@ -188,8 +193,12 @@ public class MediumAIController : MonoBehaviour
             }
             else
             {
-                // Player isn't blocking -> Attack
-                TriggerAttack();
+                // Player isn't blocking -> 50/50 punch or kick
+                float roll = Random.Range(0f, 1f);
+                if (roll < 0.5f)
+                    TriggerAttack();
+                else
+                    TriggerKick();
             }
         }
     }
@@ -227,6 +236,16 @@ public class MediumAIController : MonoBehaviour
         isReactingToAttack = false;
     }
 
+    private void TriggerKick()
+    {
+        if (!canAttack) return;
+
+        SetAIState(AIStates.Kick);
+        self.Kick();
+        canAttack = false;
+        attackCooldownTimer = attackCooldown;
+    }
+
     private void ExecuteState()
     {
         switch (currentState)
@@ -253,6 +272,9 @@ public class MediumAIController : MonoBehaviour
                 self.Move(0f);
                 break;
             case AIStates.Jump:
+                self.Move(0f);
+                break;
+            case AIStates.Kick:
                 self.Move(0f);
                 break;
         }
