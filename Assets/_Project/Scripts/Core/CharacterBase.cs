@@ -46,7 +46,8 @@ public class CharacterBase : MonoBehaviour
         Blocking,
         Hit,
         Dead,
-        Kick
+        Kick,
+        Duck
     }
 
     [Header("Components")]
@@ -79,7 +80,7 @@ public class CharacterBase : MonoBehaviour
 
     public virtual void Move(float direction)
     {
-        if (currentState == CharacterState.Dead || currentState == CharacterState.Hit || currentState == CharacterState.Blocking || currentState == CharacterState.Attacking) return;
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Hit || currentState == CharacterState.Blocking || currentState == CharacterState.Attacking || currentState == CharacterState.Duck) return;
 
         if (direction != 0)
         {
@@ -239,6 +240,29 @@ public class CharacterBase : MonoBehaviour
 
         // Temp Debug to test Kick mechanic until animation is placed in
         Debug.Log(gameObject.name + " kicked!");
+    }
+
+    public virtual void Duck(bool isDucking)
+    {
+        // Can't duck while dead, jumping, or attacking
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Jumping || currentState == CharacterState.Attacking) return;
+
+        if (isDucking)
+        {
+            // Stop movement when ducking
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            ChangeState(CharacterState.Duck);
+        }
+
+        else if (currentState == CharacterState.Duck)
+        {
+            ChangeState(CharacterState.Idle);
+        }
+
+        //Temp Debug to test Duck mechanic until animation is placed in
+        Debug.Log(gameObject.name + " ducked!");
+
+
     }
 
     public virtual void TakeDamage(int damage)

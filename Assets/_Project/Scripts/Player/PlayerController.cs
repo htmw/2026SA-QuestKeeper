@@ -26,6 +26,9 @@ public class PlayerController : MonoBehaviour
 
         controls.Player.Kick.performed += ctx => { if (!isInputLocked) fighter.Kick(); };
 
+        controls.Player.Crouch.started += ctx => { if (!isInputLocked) fighter.Duck(true); };
+        controls.Player.Crouch.canceled += ctx => fighter.Duck(false);
+
 
     }
 
