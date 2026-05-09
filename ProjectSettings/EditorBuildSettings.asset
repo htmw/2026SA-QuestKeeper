@@ -11,9 +11,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Scenes/Scn_MainMenu.unity
     guid: 4ff0690ad2dc1514eb3d841fe769b9f8
-  - enabled: 1
-    path: Assets/_Project/Scenes/Scn_Battle_Level1.unity
+  - enabled: 0
+    path: Assets/_Project/Scenes/Legacy/Scn_Battle_Level1.unity
     guid: a285cb38e4f116346a019b1504eed9c4
+  - enabled: 1
+    path: Assets/_Project/Scenes/Scn_BattleMain.unity
+    guid: dd27d5ee2bc0a7040a46885613ebc742
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
