@@ -1,37 +1,56 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class DifficultyNavigation : MonoBehaviour
 {
-    // PLAY BUTTON → Go to Difficulty Menu
-    public void GoToDifficultyMenu()
+
+    [Header("UI Panels")]
+    public GameObject mainPanel;
+    public GameObject difficultyPanel;
+
+    public void Start()
     {
-        SceneManager.LoadScene("DifficultyMenu");
+        ShowMainMenu();
+    }
+
+    // PLAY BUTTON → Go to Difficulty Menu
+    public void ShowDifficultyMenu()
+    {
+        mainPanel.SetActive(false);
+        difficultyPanel.SetActive(true);
+    }
+
+    // BACK BUTTON → Return to Main Menu
+    public void ShowMainMenu()
+    {
+        mainPanel.SetActive(true);
+        difficultyPanel.SetActive(false);
     }
 
     // EASY BUTTON
     public void LoadEasy()
     {
-        GameManager.Instance.SetDifficulty("Easy");
-        SceneManager.LoadScene("MainBattle");
+        PlayerPrefs.SetInt("MatchDifficulty", 0);
+        SceneManager.LoadScene("Scn_BattleMain");
     }
 
     // MEDIUM BUTTON
     public void LoadMedium()
     {
-        GameManager.Instance.SetDifficulty("Medium");
-        SceneManager.LoadScene("MainBattle");
+        PlayerPrefs.SetInt("MatchDifficulty", 1);
+        SceneManager.LoadScene("Scn_BattleMain");
     }
 
     // HARD BUTTON
     public void LoadHard()
     {
-        GameManager.Instance.SetDifficulty("Hard");
-        SceneManager.LoadScene("MainBattle");
+        PlayerPrefs.SetInt("MatchDifficulty", 2);
+        SceneManager.LoadScene("Scn_BattleMain");
     }
 
-    // BACK BUTTON → Return to Main Menu
-    public void BackToMainMenu()
+    public void QuitGame()
     {
-        SceneManager.LoadScene("MainMenu");
+        Debug.Log("Quitting Game...");
+        Application.Quit();
     }
 }
