@@ -29,6 +29,7 @@ public class PlayerController : MonoBehaviour
         controls.Player.Crouch.started += ctx => { if (!isInputLocked) fighter.Duck(true); };
         controls.Player.Crouch.canceled += ctx => fighter.Duck(false);
 
+        controls.Player.Grab.performed += ctx => { if (!isInputLocked) fighter.Grab(); };
 
     }
 

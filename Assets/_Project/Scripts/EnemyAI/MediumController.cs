@@ -12,7 +12,8 @@ public class MediumAIController : MonoBehaviour
         Attack,
         Block,
         Jump,
-        Kick
+        Kick,
+        Grab
     }
 
     [Header("AI State")]
@@ -193,12 +194,14 @@ public class MediumAIController : MonoBehaviour
             }
             else
             {
-                // Player isn't blocking -> 50/50 punch or kick
+                // Player isn't blocking -> 33% punch, kick, or grab
                 float roll = Random.Range(0f, 1f);
-                if (roll < 0.5f)
+                if (roll < 0.33f)
                     TriggerAttack();
-                else
+                else if (roll < 0.66f)
                     TriggerKick();
+                else
+                    TriggerGrab();
             }
         }
     }
@@ -246,6 +249,20 @@ public class MediumAIController : MonoBehaviour
         attackCooldownTimer = attackCooldown;
     }
 
+    private void TriggerGrab()
+    {
+        if (!canAttack) return;
+
+        // Use attackRange
+        if (distanceToPlayer > attackRange) return;
+
+        SetAIState(AIStates.Grab);
+        self.Grab();
+
+        canAttack = false;
+        attackCooldownTimer = attackCooldown;
+    }
+
     private void ExecuteState()
     {
         switch (currentState)
@@ -275,6 +292,9 @@ public class MediumAIController : MonoBehaviour
                 self.Move(0f);
                 break;
             case AIStates.Kick:
+                self.Move(0f);
+                break;
+            case AIStates.Grab:
                 self.Move(0f);
                 break;
         }

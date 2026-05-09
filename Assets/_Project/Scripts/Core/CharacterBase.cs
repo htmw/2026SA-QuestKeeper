@@ -47,7 +47,8 @@ public class CharacterBase : MonoBehaviour
         Hit,
         Dead,
         Kick,
-        Duck
+        Duck,
+        Grab
     }
 
     [Header("Components")]
@@ -261,8 +262,63 @@ public class CharacterBase : MonoBehaviour
 
         //Temp Debug to test Duck mechanic until animation is placed in
         Debug.Log(gameObject.name + " ducked!");
+    }
 
+    public virtual void Grab()
+    {
+        // Can't grab while dead, blocking, jumping, or already grabbing
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Jumping || currentState == CharacterState.Blocking || currentState == CharacterState.Grab) return;
 
+        // Only grab if opponent is close enough
+        if (opponent == null) return;
+        float grabRange = 1.5f;
+        if (Vector2.Distance(transform.position, opponent.position) > grabRange) return;
+
+        // Stop movement while grabbing
+        rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+
+        ChangeState(CharacterState.Grab);
+        attackTimer = attackDuration;
+
+        // Deals damage and knocks opponent back
+        CharacterBase opponentBase = opponent.GetComponent<CharacterBase>();
+        if (opponentBase != null)
+        {
+            // Apply knockback force
+            float knockbackDir = transform.position.x < opponent.position.x ? 1f : -1f;
+            opponentBase.TakeGrabDamage(15, knockbackDir * 8f);
+        }
+
+        Debug.Log(gameObject.name + " grabbed!");
+    }
+
+    public virtual void TakeGrabDamage(int damage, float knockbackForce)
+    {
+        if (currentState == CharacterState.Dead) return;
+
+        if (currentState == CharacterState.Blocking)
+        {
+            Debug.Log(gameObject.name + " blocked the grab!");
+            return;
+        }
+
+        currentHealth -= damage;
+        ChangeState(CharacterState.Hit);
+
+        //Apply knockback
+        rb.linearVelocity = new Vector2(knockbackForce, rb.linearVelocity.y);
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+
+        if (currentHealth > 0)
+        {
+            Invoke("RecoverFromHit", 0.5f);
+        }
+
+        Debug.Log(gameObject.name + " was grabbed for " + damage + " damage!");
     }
 
     public virtual void TakeDamage(int damage)
@@ -309,6 +365,15 @@ public class CharacterBase : MonoBehaviour
             if (kickTimer <= 0)
             {
                 if (basicAttackHitbox != null) basicAttackHitbox.SetActive(false);
+                ChangeState(isGrounded ? CharacterState.Idle : CharacterState.Jumping);
+            }
+        }
+
+        if (currentState == CharacterState.Grab)
+        {
+            attackTimer -= Time.deltaTime;
+            if (attackTimer <= 0)
+            {
                 ChangeState(isGrounded ? CharacterState.Idle : CharacterState.Jumping);
             }
         }
