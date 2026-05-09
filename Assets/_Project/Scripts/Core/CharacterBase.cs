@@ -224,6 +224,7 @@ public class CharacterBase : MonoBehaviour
         }
     }
 
+    // Kick Mechanic - deals 10 damage just like a punch
     public virtual void Kick()
     {
         if (currentState == CharacterState.Dead || currentState == CharacterState.Blocking || currentState == CharacterState.Kick) return;
@@ -280,13 +281,15 @@ public class CharacterBase : MonoBehaviour
         ChangeState(CharacterState.Grab);
         attackTimer = attackDuration;
 
-        // Deals damage and knocks opponent back
+        // Deals damage & knocks opponent back
         CharacterBase opponentBase = opponent.GetComponent<CharacterBase>();
         if (opponentBase != null)
         {
             // Apply knockback force
             float knockbackDir = transform.position.x < opponent.position.x ? 1f : -1f;
-            opponentBase.TakeGrabDamage(15, knockbackDir * 8f);
+
+            // Grab attack deals 12 damage
+            opponentBase.TakeGrabDamage(12, knockbackDir * 8f);
         }
 
         Debug.Log(gameObject.name + " grabbed!");
