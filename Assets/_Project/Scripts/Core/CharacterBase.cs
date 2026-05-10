@@ -27,6 +27,7 @@ public class CharacterBase : MonoBehaviour
     public float kickDuration = 0.3f;
     private float kickTimer;
     protected bool canAttack = true;
+    protected bool isDuckingInput;
 
     [Header("Movement")]
     public float pushSpeedMultiplier = 0.5f;
@@ -285,8 +286,11 @@ public class CharacterBase : MonoBehaviour
 
     public virtual void Duck(bool isDucking)
     {
-        // Can't duck while dead, jumping, or attacking
-        if (currentState == CharacterState.Dead || currentState == CharacterState.Jumping || currentState == CharacterState.Attacking) return;
+        isDuckingInput = isDucking;
+
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Jumping ||
+        currentState == CharacterState.Attacking || currentState == CharacterState.DuckAttack ||
+        currentState == CharacterState.DuckKick || currentState == CharacterState.Kick) return;
         if (isDucking)
         {
             // Stop movement when ducking
@@ -399,7 +403,8 @@ public class CharacterBase : MonoBehaviour
 
                 if (currentState == CharacterState.Attacking || currentState == CharacterState.DuckAttack)
                 {
-                    ChangeState(CharacterState.Idle);
+                    CharacterState nextState = isDuckingInput ? CharacterState.Duck : CharacterState.Idle;
+                    ChangeState(nextState);
                 }
             }
         }
@@ -414,7 +419,8 @@ public class CharacterBase : MonoBehaviour
 
                 if (currentState == CharacterState.Kick || currentState == CharacterState.DuckKick)
                 {
-                    ChangeState(CharacterState.Idle);
+                    CharacterState nextState = isDuckingInput ? CharacterState.Duck : CharacterState.Idle;
+                    ChangeState(nextState);
                 }
             }
         }

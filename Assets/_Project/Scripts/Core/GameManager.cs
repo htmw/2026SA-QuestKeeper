@@ -95,21 +95,6 @@ public class GameManager : MonoBehaviour
         PlaceFighters();
         SpawnOpponent();
 
-        //if(spawnedOpponent != null)
-        //{
-        //opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
-        //}
-
-        // Reset Health
-        //if (playerHealth != null)
-        //{
-        //playerHealth.ResetHealth();
-        //}
-
-        //if (opponentHealth != null)
-        //{
-        //opponentHealth.ResetHealth();
-        //}
 
         currTime = roundTime;
 
@@ -139,32 +124,8 @@ public class GameManager : MonoBehaviour
 
         UpdateHealthUI();
         CheckEndGame();
-        //CheckHealth();
     }
 
-    //void CheckHealth()
-    //{
-    //if (currState != MatchStates.Playing)
-    //{
-    //return;
-    //}
-
-    // Lets Game Manager know when to end the round
-    //if (playerHealth != null && playerHealth.currHealth <= 0)
-    //{
-    //Debug.Log("Player Died");
-    //SetMatchState(MatchStates.RoundOver);
-    //}
-
-    //if(opponentHealth != null && opponentHealth.currHealth <= 0)
-    //{
-    //Debug.Log("Opponent Died");
-    //SetMatchState(MatchStates.RoundOver);
-    //}
-
-    //}
-
-    // Updated Health function that uses the stats from the CharacterBase and updates the UI
     void UpdateHealthUI()
     {
         if (player != null && playerHealthBar != null)
@@ -425,13 +386,13 @@ public class GameManager : MonoBehaviour
         CharacterBase aiBase = spawnedOpponent?.GetComponent<CharacterBase>();
         CharacterBase pBase = player?.GetComponent<CharacterBase>();
 
-        // --- PLAYER AGENT LOGIC (The Mirrored Side) ---
+
         if (oppAgent != null && oppAgent.isTrainingMode)
         {
-            // NOTE: The winner IDs are flipped here!
-            if (winner == 1) oppAgent.AddReward(10.0f);      // Player won (Opponent Died)
-            else if (winner == 2) oppAgent.AddReward(-5.0f); // Player lost (Player Died)
-            else // Draw
+
+            if (winner == 1) oppAgent.AddReward(10.0f);      
+            else if (winner == 2) oppAgent.AddReward(-5.0f); 
+            else 
             {
                 oppAgent.AddReward(-40.0f);
             }
@@ -439,10 +400,10 @@ public class GameManager : MonoBehaviour
             isTraining = true;
         }
 
-        // --- PLAYER AGENT LOGIC (The Mirrored Side) ---
+
         if (playerAgent != null && playerAgent.isTrainingMode)
         {
-            // NOTE: The winner IDs are flipped here!
+
             if (winner == 2) playerAgent.AddReward(10.0f);      // Player won (Opponent Died)
             else if (winner == 1) playerAgent.AddReward(-5.0f); // Player lost (Player Died)
             else // Draw

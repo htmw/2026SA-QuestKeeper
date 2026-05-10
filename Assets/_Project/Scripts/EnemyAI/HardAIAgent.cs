@@ -44,17 +44,11 @@ public class HardAIAgent : Agent
     {
         if (fighter == null || opponentBase == null) return;
 
-        // 1. NORMALIZE SPATIAL DATA
-        // Neural networks hate raw numbers like "10". Normalize to -1 to 1 range.
         float maxStageWidth = 10f;
         Vector2 relativePos = opponentBase.transform.localPosition - transform.localPosition;
         sensor.AddObservation(relativePos.x / maxStageWidth);
-        sensor.AddObservation(relativePos.y / 5f); // Assuming max jump height is ~5
+        sensor.AddObservation(relativePos.y / 5f);
 
-        // 2. SPLIT OBSERVATIONS (Total Count: 16)
-        // Make sure Space Size in Inspector is set to 16!
-
-        // Opponent (7)
         sensor.AddObservation(opponentBase.currentState == CharacterBase.CharacterState.Attacking);
         sensor.AddObservation(opponentBase.currentState == CharacterBase.CharacterState.Blocking);
         sensor.AddObservation(opponentBase.currentState == CharacterBase.CharacterState.Jumping);
@@ -63,7 +57,6 @@ public class HardAIAgent : Agent
         sensor.AddObservation(opponentBase.currentState == CharacterBase.CharacterState.DuckAttack);
         sensor.AddObservation(opponentBase.currentState == CharacterBase.CharacterState.DuckKick);
 
-        // Me (7)
         sensor.AddObservation(fighter.currentState == CharacterBase.CharacterState.Attacking);
         sensor.AddObservation(fighter.currentState == CharacterBase.CharacterState.Blocking);
         //sensor.AddObservation(fighter.currentState == CharacterBase.CharacterState.Jumping);
@@ -129,22 +122,20 @@ public class HardAIAgent : Agent
         if (!isTrainingMode || fighter == null || opponentBase == null) return;
         if (GameManager.Instance.currState != GameManager.MatchStates.Playing) return;
 
-        // 1. STABLE TUG-OF-WAR (Scale: 0.1 per point of damage)
         if (fighter.currentHealth < myPreviousHealth)
         {
             float damage = myPreviousHealth - fighter.currentHealth;
-            AddReward(-0.3f * damage); // Lose 1.0 points if you take 10 dmg
+            AddReward(-0.3f * damage); 
             myPreviousHealth = fighter.currentHealth;
         }
 
         if (opponentBase.currentHealth < oppPreviousHealth)
         {
             float damage = oppPreviousHealth - opponentBase.currentHealth;
-            AddReward(1.0f * damage); // Slightly higher reward for dealing dmg than taking it
+            AddReward(1.0f * damage); 
             oppPreviousHealth = opponentBase.currentHealth;
         }
 
-        // 2. THE POSTURE BONUS (Encourages Block/Duck)
         // If the opponent is attacking, reward the AI for being in a defensive state.
         if (opponentBase.currentState == CharacterBase.CharacterState.Attacking ||
             opponentBase.currentState == CharacterBase.CharacterState.Kick)
@@ -152,20 +143,16 @@ public class HardAIAgent : Agent
             if (fighter.currentState == CharacterBase.CharacterState.Blocking ||
                 fighter.currentState == CharacterBase.CharacterState.Duck)
             {
-                AddReward(0.01f); // "Good job defending" breadcrumb
+                AddReward(0.01f); 
             }
         }
 
-        // 3. THE "GRAVITY TAX" (Fixing the -11,000 leak)
         if (!fighter.isGrounded)
         {
-            // Change from -10.0 to -0.02. 
-            // This is still annoying to the AI, but it won't break the math.
             AddReward(-0.06f);
         }
         else
         {
-            // Tiny reward for just staying on the floor near the enemy
             float dist = Vector2.Distance(transform.localPosition, opponentBase.transform.localPosition);
             if (dist < 2.0f) AddReward(0.05f);
         }
