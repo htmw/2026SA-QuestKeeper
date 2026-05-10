@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.XR;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class CharacterBase : MonoBehaviour
@@ -25,6 +24,9 @@ public class CharacterBase : MonoBehaviour
     public GameObject basicAttackHitbox;
     public float attackDuration = 0.2f;
     private float attackTimer;
+    public float kickDuration = 0.3f;
+    private float kickTimer;
+    protected bool canAttack = true;
 
     [Header("Movement")]
     public float pushSpeedMultiplier = 0.5f;
@@ -32,6 +34,13 @@ public class CharacterBase : MonoBehaviour
     private bool isTouchingFighter = false;
     public Transform opponent;
     public bool isFacingRight = true;
+
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip attackWhiff;
+    public AudioClip hitImpact;
+    public AudioClip jumpWhoosh;
+    public AudioClip blockHit;
 
     // The main states every fighter needs
     public enum CharacterState
@@ -43,7 +52,18 @@ public class CharacterBase : MonoBehaviour
         Attacking,
         Blocking,
         Hit,
-        Dead
+        Dead,
+        Kick,
+        Duck,
+        Grab,
+        DuckAttack,
+        DuckKick
+    }
+
+    public enum AttackType
+    {
+        Punch,
+        Kick
     }
 
     [Header("Components")]
@@ -76,7 +96,10 @@ public class CharacterBase : MonoBehaviour
 
     public virtual void Move(float direction)
     {
-        if (currentState == CharacterState.Dead || currentState == CharacterState.Hit || currentState == CharacterState.Blocking || currentState == CharacterState.Attacking) return;
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Hit ||
+            currentState == CharacterState.Blocking || currentState == CharacterState.Attacking ||
+            currentState == CharacterState.Duck || currentState == CharacterState.DuckAttack ||
+            currentState == CharacterState.DuckKick) return;
 
         if (direction != 0)
         {
@@ -106,7 +129,9 @@ public class CharacterBase : MonoBehaviour
 
             bool isPushedBackward = (isFacingRight && rb.linearVelocity.x < -0.1f) || (!isFacingRight && rb.linearVelocity.x > 0.1f);
 
-            if (isPushedBackward && isGrounded && currentState != CharacterState.Blocking && currentState != CharacterState.Hit && currentState != CharacterState.Dead)
+            if (isPushedBackward && isGrounded && currentState != CharacterState.Blocking &&
+                currentState != CharacterState.Hit && currentState != CharacterState.Dead &&
+                currentState != CharacterState.Duck)
             {
                 if (currentState != CharacterState.MovingBackward)
                 {
@@ -132,6 +157,10 @@ public class CharacterBase : MonoBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
 
             jumpsRemaining--;
+            if (audioSource != null && jumpWhoosh != null)
+            {
+                audioSource.PlayOneShot(jumpWhoosh);
+            }
             ChangeState(CharacterState.Jumping);
         }
     }
@@ -184,20 +213,30 @@ public class CharacterBase : MonoBehaviour
 
     public virtual void Attack()
     {
-        // Basic attack like a punch. May be added to or replaced later based on abilities
+
+        if (!canAttack || currentState == CharacterState.Dead || currentState == CharacterState.Blocking) return;
+        canAttack = false;
+
+        if (currentState == CharacterState.Duck)
+        {
+            ChangeState(CharacterState.DuckAttack);
+            attackTimer = attackDuration;
+
+            if (basicAttackHitbox != null) basicAttackHitbox.SetActive(true);
+            if (audioSource != null && attackWhiff != null) audioSource.PlayOneShot(attackWhiff);
+
+            Debug.Log(gameObject.name + " threw a duck punch!");
+            return;
+        }
+
         if (currentState != CharacterState.Attacking && currentState != CharacterState.Dead && currentState != CharacterState.Blocking)
         {
-            if (isGrounded)
-            {
-                // If we're on the ground, we want to stop horizontal movement when attacking
-                rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-            }
-
+            if (isGrounded) rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
             ChangeState(CharacterState.Attacking);
             attackTimer = attackDuration;
 
             if (basicAttackHitbox != null) basicAttackHitbox.SetActive(true);
-
+            if (audioSource != null && attackWhiff != null) audioSource.PlayOneShot(attackWhiff);
             Debug.Log(gameObject.name + " threw a punch!");
         }
     }
@@ -219,19 +258,123 @@ public class CharacterBase : MonoBehaviour
         }
     }
 
-    public virtual void TakeDamage(int damage)
+    public virtual void Kick()
+    {
+        if (!canAttack || currentState == CharacterState.Dead || currentState == CharacterState.Blocking) return;
+
+        canAttack = false;
+
+        if (currentState == CharacterState.Duck)
+        {
+            ChangeState(CharacterState.DuckKick);
+            kickTimer = kickDuration;
+
+            if (basicAttackHitbox != null) basicAttackHitbox.SetActive(true);
+            Debug.Log(gameObject.name + " threw a duck kick!");
+            return;
+        }
+
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Blocking || currentState == CharacterState.Kick) return;
+
+        if (isGrounded) rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+        ChangeState(CharacterState.Kick);
+        kickTimer = kickDuration;
+        if (basicAttackHitbox != null) basicAttackHitbox.SetActive(true);
+        Debug.Log(gameObject.name + " kicked!");
+    }
+
+    public virtual void Duck(bool isDucking)
+    {
+        // Can't duck while dead, jumping, or attacking
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Jumping || currentState == CharacterState.Attacking) return;
+        if (isDucking)
+        {
+            // Stop movement when ducking
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            ChangeState(CharacterState.Duck);
+        }
+        else if (currentState == CharacterState.Duck)
+        {
+            ChangeState(CharacterState.Idle);
+        }
+        //Temp Debug to test Duck mechanic until animation is placed in
+        Debug.Log(gameObject.name + " ducked!");
+    }
+    public virtual void Grab()
+    {
+        // Can't grab while dead, blocking, jumping, or already grabbing
+        if (currentState == CharacterState.Dead || currentState == CharacterState.Jumping || currentState == CharacterState.Blocking || currentState == CharacterState.Grab) return;
+        // Only grab if opponent is close enough
+        if (opponent == null) return;
+        float grabRange = 1.5f;
+        if (Vector2.Distance(transform.position, opponent.position) > grabRange) return;
+        // Stop movement while grabbing
+        rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+        ChangeState(CharacterState.Grab);
+        attackTimer = attackDuration;
+        // Deals damage & knocks opponent back
+        CharacterBase opponentBase = opponent.GetComponent<CharacterBase>();
+        if (opponentBase != null)
+        {
+            // Apply knockback force
+            float knockbackDir = transform.position.x < opponent.position.x ? 1f : -1f;
+            // Grab attack deals 12 damage
+            opponentBase.TakeGrabDamage(12, knockbackDir * 8f);
+        }
+        Debug.Log(gameObject.name + " grabbed!");
+    }
+    public virtual void TakeGrabDamage(int damage, float knockbackForce)
     {
         if (currentState == CharacterState.Dead) return;
+        if (currentState == CharacterState.Blocking)
+        {
+            Debug.Log(gameObject.name + " blocked the grab!");
+            return;
+        }
+        currentHealth -= damage;
+        ChangeState(CharacterState.Hit);
+        //Apply knockback
+        rb.linearVelocity = new Vector2(knockbackForce, rb.linearVelocity.y);
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+        if (currentHealth > 0)
+        {
+            Invoke("RecoverFromHit", 0.5f);
+        }
+        Debug.Log(gameObject.name + " was grabbed for " + damage + " damage!");
+    }
+
+
+    public virtual void TakeDamage(int damage, AttackType attackType = AttackType.Punch)
+    {
+        if (basicAttackHitbox != null) basicAttackHitbox.SetActive(false);
+
+        if (currentState == CharacterState.Dead) return;
+
+        if (currentState == CharacterState.Duck && attackType == AttackType.Punch)
+        {
+            return;
+        }
 
         if (currentState == CharacterState.Blocking)
         {
             Debug.Log(gameObject.name + " blocked the attack!");
-            // TODO: Set up possible chip damage logic
+            currentHealth -= (damage - 8);
+            if (audioSource != null && blockHit != null) audioSource.PlayOneShot(blockHit);
             return;
         }
 
+        ResetCombat();
+        if (basicAttackHitbox != null) basicAttackHitbox.SetActive(false);
+
         currentHealth -= damage;
         ChangeState(CharacterState.Hit);
+        if (audioSource != null && hitImpact != null)
+        {
+            audioSource.PlayOneShot(hitImpact);
+        }
 
         if (currentHealth <= 0)
         {
@@ -246,14 +389,33 @@ public class CharacterBase : MonoBehaviour
 
     protected virtual void AttackLogic()
     {
-        if (currentState == CharacterState.Attacking)
+        if (attackTimer > 0)
         {
             attackTimer -= Time.deltaTime;
             if (attackTimer <= 0)
             {
+                canAttack = true;
                 if (basicAttackHitbox != null) basicAttackHitbox.SetActive(false);
 
-                ChangeState(isGrounded ? CharacterState.Idle : CharacterState.Jumping);
+                if (currentState == CharacterState.Attacking || currentState == CharacterState.DuckAttack)
+                {
+                    ChangeState(CharacterState.Idle);
+                }
+            }
+        }
+
+        if (kickTimer > 0)
+        {
+            kickTimer -= Time.deltaTime;
+            if (kickTimer <= 0)
+            {
+                canAttack = true;
+                if (basicAttackHitbox != null) basicAttackHitbox.SetActive(false);
+
+                if (currentState == CharacterState.Kick || currentState == CharacterState.DuckKick)
+                {
+                    ChangeState(CharacterState.Idle);
+                }
             }
         }
     }
@@ -288,7 +450,10 @@ public class CharacterBase : MonoBehaviour
 
         if (anim != null)
         {
-            anim.Play(newState.ToString());
+            if (anim.HasState(0, Animator.StringToHash(newState.ToString())))
+            {
+                anim.Play(newState.ToString());
+            }
         }
     }
 
@@ -318,5 +483,13 @@ public class CharacterBase : MonoBehaviour
                 rb.AddForce(new Vector2(slideDirection * 50f, 0));
             }
         }
+    }
+
+    public void ResetCombat()
+    {
+        canAttack = true;
+        attackTimer = 0;
+        kickTimer = 0;
+        isTouchingFighter = false; 
     }
 }

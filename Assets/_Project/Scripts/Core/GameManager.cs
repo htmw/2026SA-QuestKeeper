@@ -416,27 +416,39 @@ public class GameManager : MonoBehaviour
     // Helper to check if we are training
     private bool TryEndTrainingEpisode(int winner)
     {
-        HardAIAgent oppAgent = spawnedOpponent != null ? spawnedOpponent.GetComponent<HardAIAgent>() : null;
-        HardAIAgent playerAgent = player != null ? player.GetComponent<HardAIAgent>() : null;
+        HardAIAgent oppAgent = spawnedOpponent?.GetComponent<HardAIAgent>();
+        HardAIAgent playerAgent = player?.GetComponent<HardAIAgent>();
 
         bool isTraining = false;
 
+        // Get health stats for draw calculations
+        CharacterBase aiBase = spawnedOpponent?.GetComponent<CharacterBase>();
+        CharacterBase pBase = player?.GetComponent<CharacterBase>();
+
+        // --- PLAYER AGENT LOGIC (The Mirrored Side) ---
         if (oppAgent != null && oppAgent.isTrainingMode)
         {
-            if (winner == 1) oppAgent.AddReward(2f);           // Jackpot
-            else if (winner == 2) oppAgent.AddReward(-1f);     // Failure
-            else oppAgent.AddReward(-5f);                      // Draw
-
+            // NOTE: The winner IDs are flipped here!
+            if (winner == 1) oppAgent.AddReward(10.0f);      // Player won (Opponent Died)
+            else if (winner == 2) oppAgent.AddReward(-5.0f); // Player lost (Player Died)
+            else // Draw
+            {
+                oppAgent.AddReward(-40.0f);
+            }
             oppAgent.EndEpisode();
             isTraining = true;
         }
 
+        // --- PLAYER AGENT LOGIC (The Mirrored Side) ---
         if (playerAgent != null && playerAgent.isTrainingMode)
         {
-            if (winner == 2) playerAgent.AddReward(2f);        // Jackpot
-            else if (winner == 1) playerAgent.AddReward(-1f);  // Failure
-            else playerAgent.AddReward(-5f);                   // Draw
-
+            // NOTE: The winner IDs are flipped here!
+            if (winner == 2) playerAgent.AddReward(10.0f);      // Player won (Opponent Died)
+            else if (winner == 1) playerAgent.AddReward(-5.0f); // Player lost (Player Died)
+            else // Draw
+            {
+                playerAgent.AddReward(-40.0f);
+            }
             playerAgent.EndEpisode();
             isTraining = true;
         }
@@ -452,16 +464,24 @@ public class GameManager : MonoBehaviour
         if (player != null && PlayerSpawnPoint != null) player.transform.position = PlayerSpawnPoint.position;
         if (spawnedOpponent != null && OpponentSpawnPoint != null) spawnedOpponent.transform.position = OpponentSpawnPoint.position;
 
-        // Reset Player stats & physics
-        CharacterBase pBase = player.GetComponent<CharacterBase>();
-        pBase.currentHealth = pBase.maxHealth;
-        pBase.ChangeState(CharacterBase.CharacterState.Idle);
-        player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+        ResetFighterStats(player.GetComponent<CharacterBase>());
+        ResetFighterStats(spawnedOpponent.GetComponent<CharacterBase>());
+    }
 
-        // Reset AI stats & physics
-        CharacterBase aiBase = spawnedOpponent.GetComponent<CharacterBase>();
-        aiBase.currentHealth = aiBase.maxHealth;
-        aiBase.ChangeState(CharacterBase.CharacterState.Idle);
-        spawnedOpponent.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+    private void ResetFighterStats(CharacterBase cBase)
+    {
+        if (cBase == null) return;
+
+        cBase.currentHealth = cBase.maxHealth;
+        cBase.ChangeState(CharacterBase.CharacterState.Idle);
+
+        cBase.ResetCombat();
+
+        Rigidbody2D rb = cBase.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
     }
 }

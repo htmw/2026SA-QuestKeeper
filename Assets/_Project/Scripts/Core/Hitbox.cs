@@ -34,21 +34,47 @@ public class Hitbox : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            DeliverPunch(hitObjects[i]);
+            DeliverStrike(hitObjects[i]);
         }
     }
 
-    private void DeliverPunch(Collider2D collision)
+    private void DeliverStrike(Collider2D collision)
     {
-        if (hasHit) return; // Prevent multiple hits in one attack
+        if (hasHit) return;
 
         CharacterBase target = collision.GetComponent<CharacterBase>();
 
         if (target != null && target != owner)
         {
-            target.TakeDamage(damage);
-            hasHit = true; // Mark that we've hit something to prevent multiple hits
-            Debug.Log($"{owner.name} hit {target.name} for {damage} damage! {target.name} has {target.currentHealth} health left.");
+            CharacterBase.AttackType currentAttackType = CharacterBase.AttackType.Punch;
+            int deliveredDamage = damage;
+
+            if (owner != null)
+            {
+                // Standing Kick: Low attack, slightly less damage
+                if (owner.currentState == CharacterBase.CharacterState.Kick)
+                {
+                    currentAttackType = CharacterBase.AttackType.Kick;
+                    deliveredDamage = damage + 2; // 12 damage
+                }
+                // Duck Punch: Flagged as low attack so it hits crouchers, reduced damage
+                else if (owner.currentState == CharacterBase.CharacterState.DuckAttack)
+                {
+                    currentAttackType = CharacterBase.AttackType.Kick;
+                    deliveredDamage = damage - 2; // 8 damage
+                }
+                // Duck Kick: Flagged as low attack, lowest damage fast-poke
+                else if (owner.currentState == CharacterBase.CharacterState.DuckKick)
+                {
+                    currentAttackType = CharacterBase.AttackType.Kick;
+                    deliveredDamage = damage - 4; // 6 damage
+                }
+            }
+
+            target.TakeDamage(deliveredDamage, currentAttackType);
+            hasHit = true;
+
+            Debug.Log($"{owner.name} hit {target.name} with a {currentAttackType} (from state {owner.currentState}) for {deliveredDamage} damage!");
         }
     }
 }

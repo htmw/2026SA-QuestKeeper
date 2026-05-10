@@ -17,6 +17,7 @@ public class EasyController : MonoBehaviour
     private CharacterBase fighter;
 
     private bool isCurrentlyBlocking = false;
+    private bool isCurrentlyDucking = false;
     private bool isBackingUp = false;
     private bool isIdling = false;
 
@@ -42,7 +43,10 @@ public class EasyController : MonoBehaviour
         }
 
         //move to player  TC03_03
-        if (!isCurrentlyBlocking && fighter.currentState != CharacterBase.CharacterState.Attacking) {
+        if (!isCurrentlyBlocking && !isCurrentlyDucking &&
+            fighter.currentState != CharacterBase.CharacterState.Attacking &&
+            fighter.currentState != CharacterBase.CharacterState.DuckAttack &&
+            fighter.currentState != CharacterBase.CharacterState.DuckKick) {
 
             if (fighter.opponent != null)
             {
@@ -83,54 +87,99 @@ public class EasyController : MonoBehaviour
             isCurrentlyBlocking = false;
         }
 
+        if (isCurrentlyDucking)
+        {
+            fighter.Duck(false); // Stand back up!
+            isCurrentlyDucking = false;
+        }
+
         isBackingUp = false;
         isIdling = false;
 
         float distanceToPlayer = Mathf.Abs(fighter.opponent.position.x - transform.position.x);
-        int randomChoice = Random.Range(0, 7);
 
-        switch (randomChoice) {
-            case 0: // Attack
-                //part for TC03_02/03
-                fighter.Move(0); 
-                fighter.Attack(); 
-                Debug.Log("Easy AI Level Action: Attack");
-                break;
+        if (distanceToPlayer <= stoppingDistance + 0.5f)
+        {
+            int closeChoice = Random.Range(0, 10); // Roll 0 to 9
 
-            case 1: // Attack
-                //part for TC03_02/03
-                fighter.Move(0);
-                fighter.Attack();
-                Debug.Log("Easy AI Level Action: Attack");
-                break;
+            switch (closeChoice)
+            {
+                case 0:
+                case 1: // Standard Punch
+                    fighter.Move(0);
+                    fighter.Attack();
+                    Debug.Log("Easy AI: Standing Punch");
+                    break;
 
-            case 2: // Attack
-                //part for TC03_02/03
-                fighter.Move(0);
-                fighter.Attack();
-                Debug.Log("Easy AI Level Action: Attack");
-                break;
+                case 2:
+                case 3: // Standard Kick 
+                    fighter.Move(0);
+                    fighter.Kick();
+                    Debug.Log("Easy AI: Standing Kick");
+                    break;
 
-            case 3: // Block
-                fighter.Move(0);
-                fighter.Block(true);
-                isCurrentlyBlocking = true;
-                Debug.Log("Easy AI Level Action: Block");
-                break;
+                case 4: // Defensive Duck
+                    fighter.Move(0);
+                    fighter.Duck(true);
+                    isCurrentlyDucking = true;
+                    Debug.Log("Easy AI: Ducking (Evasion)");
+                    break;
 
-            case 4: // Jump
-                fighter.Jump(); 
-                Debug.Log("Easy AI Level Action: Jump");
-                break;
+                case 5: // Duck Punch
+                    fighter.Move(0);
+                    fighter.Duck(true); 
+                    fighter.Attack();  
+                    isCurrentlyDucking = true;
+                    Debug.Log("Easy AI: Duck Punch");
+                    break;
 
-            case 5: // Retreat
-                isBackingUp = true;
-                Debug.Log("Easy AI Level Action: Backing Up");
-                break;
-            case 6: // Idle
-                fighter.Move(0);
-                Debug.Log("Easy AI Level Action: Idle/Waiting");
-                break;
+                case 6: // Duck Kick
+                    fighter.Move(0);
+                    fighter.Duck(true); 
+                    fighter.Kick();    
+                    isCurrentlyDucking = true;
+                    Debug.Log("Easy AI: Duck Kick");
+                    break;
+
+                case 7:
+                case 8: // Stand and Block
+                    fighter.Move(0);
+                    fighter.Block(true);
+                    isCurrentlyBlocking = true;
+                    Debug.Log("Easy AI: Blocking");
+                    break;
+
+                case 9: // Tactical step back
+                    isBackingUp = true;
+                    Debug.Log("Easy AI: Backing Up");
+                    break;
+            }
+        }
+        else
+        {
+            int farChoice = Random.Range(0, 10);
+
+            switch (farChoice)
+            {
+                case 0: //  Jump forward
+                    fighter.Jump();
+                    Debug.Log("Easy AI: Jump Approach");
+                    break;
+
+                case 1: //  Stand completely still
+                    isIdling = true;
+                    Debug.Log("Easy AI: Pausing (Idle)");
+                    break;
+
+                case 2: //  Step backward
+                    isBackingUp = true;
+                    Debug.Log("Easy AI: Spacing Backward");
+                    break;
+
+                default: //  Do nothing, let Update walk directly to the player
+                    Debug.Log("Easy AI: Approaching Player");
+                    break;
+            }
         }
     }
 }

@@ -23,6 +23,11 @@ public class PlayerController : MonoBehaviour
 
         controls.Player.Block.started += ctx => { if (!isInputLocked) fighter.Block(true); };
         controls.Player.Block.canceled += ctx => fighter.Block(false);
+
+        controls.Player.Kick.performed += ctx => { if (!isInputLocked) fighter.Kick(); };
+        controls.Player.Duck.started += ctx => { if (!isInputLocked) fighter.Duck(true); };
+        controls.Player.Duck.canceled += ctx => fighter.Duck(false);
+        controls.Player.Grab.performed += ctx => { if (!isInputLocked) fighter.Grab(); };
     }
 
     void OnEnable()

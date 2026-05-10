@@ -1,0 +1,39 @@
+{
+    "HardFighterBot": {
+        "elo": -118.0245675428098,
+        "checkpoints": [
+            {
+                "steps": 499992,
+                "file_path": "results\\HardAI_Mixups_01\\HardFighterBot\\HardFighterBot-499992.onnx",
+                "reward": null,
+                "creation_time": 1778370997.792237,
+                "auxillary_file_paths": [
+                    "results\\HardAI_Mixups_01\\HardFighterBot\\HardFighterBot-499992.pt"
+                ]
+            },
+            {
+                "steps": 500120,
+                "file_path": "results\\HardAI_Mixups_01\\HardFighterBot\\HardFighterBot-500120.onnx",
+                "reward": null,
+                "creation_time": 1778370997.8426895,
+                "auxillary_file_paths": [
+                    "results\\HardAI_Mixups_01\\HardFighterBot\\HardFighterBot-500120.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 500120,
+            "file_path": "results\\HardAI_Mixups_01\\HardFighterBot.onnx",
+            "reward": null,
+            "creation_time": 1778370997.8426895,
+            "auxillary_file_paths": [
+                "results\\HardAI_Mixups_01\\HardFighterBot\\HardFighterBot-500120.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.1.1+cpu"
+    }
+}
