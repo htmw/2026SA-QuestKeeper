@@ -95,21 +95,6 @@ public class GameManager : MonoBehaviour
         PlaceFighters();
         SpawnOpponent();
 
-        //if(spawnedOpponent != null)
-        //{
-        //opponentHealth = spawnedOpponent.GetComponent<HealthSystem>();
-        //}
-
-        // Reset Health
-        //if (playerHealth != null)
-        //{
-        //playerHealth.ResetHealth();
-        //}
-
-        //if (opponentHealth != null)
-        //{
-        //opponentHealth.ResetHealth();
-        //}
 
         currTime = roundTime;
 
@@ -139,32 +124,8 @@ public class GameManager : MonoBehaviour
 
         UpdateHealthUI();
         CheckEndGame();
-        //CheckHealth();
     }
 
-    //void CheckHealth()
-    //{
-    //if (currState != MatchStates.Playing)
-    //{
-    //return;
-    //}
-
-    // Lets Game Manager know when to end the round
-    //if (playerHealth != null && playerHealth.currHealth <= 0)
-    //{
-    //Debug.Log("Player Died");
-    //SetMatchState(MatchStates.RoundOver);
-    //}
-
-    //if(opponentHealth != null && opponentHealth.currHealth <= 0)
-    //{
-    //Debug.Log("Opponent Died");
-    //SetMatchState(MatchStates.RoundOver);
-    //}
-
-    //}
-
-    // Updated Health function that uses the stats from the CharacterBase and updates the UI
     void UpdateHealthUI()
     {
         if (player != null && playerHealthBar != null)
@@ -416,27 +377,39 @@ public class GameManager : MonoBehaviour
     // Helper to check if we are training
     private bool TryEndTrainingEpisode(int winner)
     {
-        HardAIAgent oppAgent = spawnedOpponent != null ? spawnedOpponent.GetComponent<HardAIAgent>() : null;
-        HardAIAgent playerAgent = player != null ? player.GetComponent<HardAIAgent>() : null;
+        HardAIAgent oppAgent = spawnedOpponent?.GetComponent<HardAIAgent>();
+        HardAIAgent playerAgent = player?.GetComponent<HardAIAgent>();
 
         bool isTraining = false;
 
+        // Get health stats for draw calculations
+        CharacterBase aiBase = spawnedOpponent?.GetComponent<CharacterBase>();
+        CharacterBase pBase = player?.GetComponent<CharacterBase>();
+
+
         if (oppAgent != null && oppAgent.isTrainingMode)
         {
-            if (winner == 1) oppAgent.AddReward(2f);           // Jackpot
-            else if (winner == 2) oppAgent.AddReward(-1f);     // Failure
-            else oppAgent.AddReward(-5f);                      // Draw
 
+            if (winner == 1) oppAgent.AddReward(10.0f);      
+            else if (winner == 2) oppAgent.AddReward(-5.0f); 
+            else 
+            {
+                oppAgent.AddReward(-40.0f);
+            }
             oppAgent.EndEpisode();
             isTraining = true;
         }
 
+
         if (playerAgent != null && playerAgent.isTrainingMode)
         {
-            if (winner == 2) playerAgent.AddReward(2f);        // Jackpot
-            else if (winner == 1) playerAgent.AddReward(-1f);  // Failure
-            else playerAgent.AddReward(-5f);                   // Draw
 
+            if (winner == 2) playerAgent.AddReward(10.0f);      // Player won (Opponent Died)
+            else if (winner == 1) playerAgent.AddReward(-5.0f); // Player lost (Player Died)
+            else // Draw
+            {
+                playerAgent.AddReward(-40.0f);
+            }
             playerAgent.EndEpisode();
             isTraining = true;
         }
@@ -452,16 +425,24 @@ public class GameManager : MonoBehaviour
         if (player != null && PlayerSpawnPoint != null) player.transform.position = PlayerSpawnPoint.position;
         if (spawnedOpponent != null && OpponentSpawnPoint != null) spawnedOpponent.transform.position = OpponentSpawnPoint.position;
 
-        // Reset Player stats & physics
-        CharacterBase pBase = player.GetComponent<CharacterBase>();
-        pBase.currentHealth = pBase.maxHealth;
-        pBase.ChangeState(CharacterBase.CharacterState.Idle);
-        player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+        ResetFighterStats(player.GetComponent<CharacterBase>());
+        ResetFighterStats(spawnedOpponent.GetComponent<CharacterBase>());
+    }
 
-        // Reset AI stats & physics
-        CharacterBase aiBase = spawnedOpponent.GetComponent<CharacterBase>();
-        aiBase.currentHealth = aiBase.maxHealth;
-        aiBase.ChangeState(CharacterBase.CharacterState.Idle);
-        spawnedOpponent.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+    private void ResetFighterStats(CharacterBase cBase)
+    {
+        if (cBase == null) return;
+
+        cBase.currentHealth = cBase.maxHealth;
+        cBase.ChangeState(CharacterBase.CharacterState.Idle);
+
+        cBase.ResetCombat();
+
+        Rigidbody2D rb = cBase.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
     }
 }

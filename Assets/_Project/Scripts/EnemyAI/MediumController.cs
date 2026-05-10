@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class MediumAIController : MonoBehaviour
 {
@@ -11,7 +10,11 @@ public class MediumAIController : MonoBehaviour
         MoveBack,
         Attack,
         Block,
-        Jump
+        Jump,
+        Kick,
+        Duck,
+        DuckAttack,
+        DuckKick
     }
 
     [Header("AI State")]
@@ -34,7 +37,7 @@ public class MediumAIController : MonoBehaviour
     public float attackRange = 1.5f;
 
     // AI backs up if too close
-    public float tooCloseRange = 2f;
+    public float tooCloseRange = 0.8f;
 
     [Header("Decision Timing")]
     public float decisionInterval = 0.6f;
@@ -61,6 +64,7 @@ public class MediumAIController : MonoBehaviour
     public float jumpCooldown = 1.5f;
     private float jumpCooldownTimer = 0f;
     private bool canJump = true;
+    private bool isCurrentlyDucking = false;
 
     private void Start()
     {
@@ -123,15 +127,27 @@ public class MediumAIController : MonoBehaviour
 
     private void EvaluateEnvironment()
     {
+        if (isCurrentlyDucking)
+        {
+            self.Duck(false);
+            isCurrentlyDucking = false;
+        }
+
         // Low Health defensive mode [50/50 block or jump]
         float healthPercent = (float)self.currentHealth / self.maxHealth;
         if (healthPercent <= lowHealthThreshold)
         {
             float roll = Random.Range(0f, 1f);
-            if (roll < 0.5f)
+            if (roll < 0.4f)
             {
                 SetAIState(AIStates.Block);
                 self.Block(true);
+            }
+            else if (roll < 0.7f)
+            {
+                SetAIState(AIStates.Duck);
+                self.Duck(true);
+                isCurrentlyDucking = true;
             }
             else
             {
@@ -145,7 +161,14 @@ public class MediumAIController : MonoBehaviour
         {
             isReactingToAttack = true;
             float reactionTime = Random.Range(minReactionTime, maxReactionTime);
-            Invoke("TriggerBlock", reactionTime);
+            if (Random.value < 0.5f)
+            {
+                Invoke("TriggerBlock", reactionTime);
+            }
+            else
+            {
+                Invoke("TriggerEvasiveDuck", reactionTime);
+            }
             return;
         }
 
@@ -173,23 +196,29 @@ public class MediumAIController : MonoBehaviour
             {
                 // Player is blocking - 33% each
                 float roll = Random.Range(0f, 1f);
-                if(roll < 0.33f)
-                {
-                    SetAIState(AIStates.Idle); // Wait
-                }
-                else if (roll < 0.66f)
-                {
-                    SetAIState(AIStates.Jump); // Jump 
-                }
-                else
-                {
-                    SetAIState(AIStates.MoveBack); // Move away
-                }
+                if (roll < 0.25f) SetAIState(AIStates.Idle); 
+                else if (roll < 0.5f) TriggerKick();        
+                else SetAIState(AIStates.MoveBack);
             }
+
+            else if (player.currentState == CharacterBase.CharacterState.Duck ||
+                     player.currentState == CharacterBase.CharacterState.DuckAttack ||
+                     player.currentState == CharacterBase.CharacterState.DuckKick)
+            {
+                float roll = Random.Range(0f, 1f);
+                if (roll < 0.3f) TriggerKick();            
+                else if (roll < 0.5f) TriggerDuckAttack(); 
+                else if (roll < 0.7f) TriggerDuckKick();   
+                else SetAIState(AIStates.MoveBack);              
+            }
+
             else
             {
-                // Player isn't blocking -> Attack
-                TriggerAttack();
+                float roll = Random.Range(0f, 1f);
+                if (roll < 0.4f) TriggerAttack();          
+                else if (roll < 0.6f) TriggerKick();        
+                else if (roll < 0.75f) TriggerDuckAttack(); 
+                else SetAIState(AIStates.MoveBack);
             }
         }
     }
@@ -209,6 +238,7 @@ public class MediumAIController : MonoBehaviour
     {
         if (!canAttack) return;
         SetAIState(AIStates.Attack);
+        self.Duck(false); 
         self.Attack();
 
         // Start cooldown
@@ -216,13 +246,54 @@ public class MediumAIController : MonoBehaviour
         attackCooldownTimer = attackCooldown;
     }
 
+    private void TriggerKick()
+    {
+        if (!canAttack) return;
+        SetAIState(AIStates.Kick);
+        self.Duck(false);
+        self.Kick();
+        canAttack = false;
+        attackCooldownTimer = attackCooldown;
+    }
+
+    private void TriggerDuckAttack()
+    {
+        if (!canAttack) return;
+        SetAIState(AIStates.DuckAttack);
+        self.Duck(true); 
+        self.Attack();   
+        isCurrentlyDucking = true;
+        canAttack = false;
+        attackCooldownTimer = attackCooldown;
+    }
+
+    private void TriggerDuckKick()
+    {
+        if (!canAttack) return;
+        SetAIState(AIStates.DuckKick);
+        self.Duck(true); 
+        self.Kick();     
+        isCurrentlyDucking = true;
+        canAttack = false;
+        attackCooldownTimer = attackCooldown;
+    }
     private void TriggerBlock()
     {
-        // Only block if plyaer is still attacking 
         if (player.currentState == CharacterBase.CharacterState.Attacking)
         {
             SetAIState(AIStates.Block);
             self.Block(true);
+        }
+        isReactingToAttack = false;
+    }
+
+    private void TriggerEvasiveDuck()
+    {
+        if (player.currentState == CharacterBase.CharacterState.Attacking)
+        {
+            SetAIState(AIStates.Duck);
+            self.Duck(true);
+            isCurrentlyDucking = true;
         }
         isReactingToAttack = false;
     }
@@ -232,27 +303,37 @@ public class MediumAIController : MonoBehaviour
         switch (currentState)
         {
             case AIStates.MoveFWD:
-                float FWD = (player.transform.position.x > transform.position.x) ? 1f : -1f;
-                self.Move(FWD);
+                if (distanceToPlayer <= attackRange && distanceToPlayer >= tooCloseRange)
+                {
+                    self.Move(0f); 
+                }
+                else
+                {
+                    float FWD = (player.transform.position.x > transform.position.x) ? 1f : -1f;
+                    self.Move(FWD);
+                }
                 break;
 
             case AIStates.MoveBack:
-                float AwayDir = (player.transform.position.x > transform.position.x) ? -1f : 1f;
-                self.Move(AwayDir);
+                if (distanceToPlayer <= attackRange && distanceToPlayer >= tooCloseRange)
+                {
+                    self.Move(0f); 
+                }
+                else
+                {
+                    float AwayDir = (player.transform.position.x > transform.position.x) ? -1f : 1f;
+                    self.Move(AwayDir);
+                }
                 break;
 
             case AIStates.Idle:
-                self.Move(0f);
-                break;
-
             case AIStates.Block:
-                self.Move(0f);
-                break;
-
             case AIStates.Attack:
-                self.Move(0f);
-                break;
             case AIStates.Jump:
+            case AIStates.Kick:
+            case AIStates.Duck:       
+            case AIStates.DuckAttack: 
+            case AIStates.DuckKick:
                 self.Move(0f);
                 break;
         }

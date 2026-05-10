@@ -1,0 +1,30 @@
+{
+    "HardFighterBot": {
+        "elo": 868.9912286926999,
+        "checkpoints": [
+            {
+                "steps": 100072,
+                "file_path": "results\\HardAI_Aggro_01\\HardFighterBot\\HardFighterBot-100072.onnx",
+                "reward": -8.381667828187346,
+                "creation_time": 1778378725.3340666,
+                "auxillary_file_paths": [
+                    "results\\HardAI_Aggro_01\\HardFighterBot\\HardFighterBot-100072.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 100072,
+            "file_path": "results\\HardAI_Aggro_01\\HardFighterBot.onnx",
+            "reward": -8.381667828187346,
+            "creation_time": 1778378725.3340666,
+            "auxillary_file_paths": [
+                "results\\HardAI_Aggro_01\\HardFighterBot\\HardFighterBot-100072.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.1.1+cpu"
+    }
+}
